@@ -20,7 +20,7 @@ body {
     border-radius: 15px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
     width: 90%;
-    max-width: 400px;
+    max-width: 600px;
 }
 
 h1 {
@@ -79,4 +79,88 @@ button {
 
 button:hover {
     background-color: #1991db;
+}
+
+button:disabled {
+    background-color: #1da1f280;
+    cursor: not-allowed;
+}
+
+.tweets-container {
+    margin-top: 2rem;
+    max-height: 500px;
+    overflow-y: auto;
+    display: none;
+}
+
+.tweets-container.active {
+    display: block;
+}
+
+.tweet {
+    background-color: #253341;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #38444d;
+    transition: background-color 0.2s ease;
+}
+
+.tweet:hover {
+    background-color: #2c3c4c;
+}
+
+.tweet-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.tweet-content {
+    line-height: 1.5;
+    margin-bottom: 0.8rem;
+    word-wrap: break-word;
+}
+
+.tweet-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    color: #8899a6;
+    font-size: 0.9rem;
+}
+
+.tweet-stats span {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.tweet-time {
+    color: #8899a6;
+    font-size: 0.9rem;
+}
+
+.tweet.error {
+    border-color: #ff4444;
+    background-color: #ff44441a;
+}
+
+/* Scrollbar styling */
+.tweets-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.tweets-container::-webkit-scrollbar-track {
+    background: #253341;
+    border-radius: 4px;
+}
+
+.tweets-container::-webkit-scrollbar-thumb {
+    background: #38444d;
+    border-radius: 4px;
+}
+
+.tweets-container::-webkit-scrollbar-thumb:hover {
+    background: #485a6d;
 }
