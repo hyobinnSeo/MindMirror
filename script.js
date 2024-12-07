@@ -22,18 +22,39 @@ const IMAGE_STYLE_STORAGE_KEY = 'image_style';
 
 // Image Style Prompts
 const STYLE_PROMPTS = {
-    renaissance: "Create a scene in the style of a historical record painting, showing a {gender} aged {age} naturally engaged in their daily activities. Focus on authentic period details and natural composition, depicting: {tweets}",
-    photography: "Create a candid snapshot capturing a moment from everyday life, showing a {gender} aged {age} naturally engaged in their activities. Focus on genuine, unposed moments like those found in documentary photography: {tweets}",
-    illustration: "Create a scene like those found within story books, showing a {gender} aged {age} naturally engaged in their daily activities. Focus on warm, relatable moments that complement the narrative: {tweets}",
-    poster: "Create a natural scene from a movie, showing a {gender} aged {age} as a character engaged in their daily activities. Focus on authentic moments rather than promotional poses: {tweets}",
-    anime: "Create a slice-of-life anime scene, showing a {gender} aged {age} as a character naturally engaged in their daily activities. Focus on warm, everyday moments rather than action sequences: {tweets}"
+    renaissance: {
+        name: "Renaissance Oil Painting",
+        guide: "Create the scene in the style of a Renaissance oil painting, with rich colors, dramatic lighting, and classical composition techniques. Focus on capturing the character's essence through traditional portraiture methods while maintaining historical accuracy in depicting their daily activities."
+    },
+    photography: {
+        name: "19th Century Photography",
+        guide: "Render the scene as if captured through a vintage camera lens, with characteristic sepia tones and period-appropriate photographic techniques. Emphasize authentic composition and lighting typical of early photography while showcasing the character's daily life."
+    },
+    illustration: {
+        name: "Classic Book Illustration",
+        guide: "Design the scene in the style of traditional book illustrations, with detailed linework and careful attention to storytelling elements. Use techniques reminiscent of classic literary illustrations to bring the character's daily activities to life."
+    },
+    poster: {
+        name: "Vintage Movie Poster",
+        guide: "Compose the scene with the dramatic flair of vintage cinema posters, incorporating bold compositions and characteristic color palettes of the golden age of movie marketing, while maintaining focus on the character's authentic daily moments."
+    },
+    anime: {
+        name: "Anime Style",
+        guide: "Create the scene in a Japanese anime art style, with clean lines, expressive features, and characteristic visual elements of the medium. Focus on slice-of-life moments that capture the character's daily activities in an authentic way."
+    }
 };
 
 // Default DALL-E prompt template
-const DEFAULT_PROMPT = `Read the user's diary history and generate an image showing a {gender} aged {age} naturally engaged in their daily activities.
-Create a scene depicting their everyday life based on these entries: {tweets}
-Focus on authentic, natural moments that show what they actually do day-to-day.
-Make the scene appropriate and safe for all audiences.`;
+const DEFAULT_PROMPT = `Generate an image depicting a single character's daily life. The character's details are:
+
+Gender: {gender}
+Age: {age}
+Character's Diary History: {diary}
+
+Your image should follow the guidelines below:
+Style: {style_name}
+Guide: {style_guide}
+Important: The generated image must realistically portray the character's activities as described in their diary.`;
 
 // Load settings from localStorage
 let twitterApiKey = localStorage.getItem(TWITTER_API_KEY_STORAGE_KEY) || '';
@@ -159,20 +180,18 @@ const createPrompt = (tweets) => {
     // Get user's age range and gender
     const ageRange = ageRangeSelect.value;
     const gender = genderSelect.value;
+    const style = STYLE_PROMPTS[selectedStyle];
 
-    // Replace placeholders in prompts
-    const basePrompt = DEFAULT_PROMPT
-        .replace('{tweets}', cleanText)
+    // Replace placeholders in prompt
+    const prompt = DEFAULT_PROMPT
+        .replace('{diary}', cleanText)
         .replace('{age}', ageRange)
-        .replace('{gender}', gender);
-
-    const stylePrompt = STYLE_PROMPTS[selectedStyle]
-        .replace('{tweets}', cleanText)
-        .replace('{age}', ageRange)
-        .replace('{gender}', gender);
+        .replace('{gender}', gender)
+        .replace('{style_name}', style.name)
+        .replace('{style_guide}', style.guide);
     
-    // Use custom prompt if provided, otherwise combine default and style prompts
-    return dallePrompt || `${basePrompt}\n\n${stylePrompt}`;
+    // Use custom prompt if provided, otherwise use default
+    return dallePrompt || prompt;
 };
 
 // Display Loading State
