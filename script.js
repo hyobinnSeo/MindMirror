@@ -1,21 +1,25 @@
 // DOM Elements
 const twitterHandle = document.getElementById('twitter-handle');
 const submitBtn = document.getElementById('submit-btn');
+const imageContainer = document.getElementById('image-container');
 const tweetsContainer = document.getElementById('tweets-container');
 const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
-const apiKeyInput = document.getElementById('api-key');
+const twitterApiKeyInput = document.getElementById('twitter-api-key');
+const openaiApiKeyInput = document.getElementById('openai-api-key');
 const saveSettingsBtn = document.getElementById('save-settings');
 const closeModalBtn = document.getElementById('close-modal');
 
 // Constants
-const API_KEY_STORAGE_KEY = 'twitter_api_key';
+const TWITTER_API_KEY_STORAGE_KEY = 'twitter_api_key';
+const OPENAI_API_KEY_STORAGE_KEY = 'openai_api_key';
 
-// Load API key from localStorage
-let apiKey = localStorage.getItem(API_KEY_STORAGE_KEY) || '';
-if (apiKey) {
-    apiKeyInput.value = apiKey;
-}
+// Load API keys from localStorage
+let twitterApiKey = localStorage.getItem(TWITTER_API_KEY_STORAGE_KEY) || '';
+let openaiApiKey = localStorage.getItem(OPENAI_API_KEY_STORAGE_KEY) || '';
+
+if (twitterApiKey) twitterApiKeyInput.value = twitterApiKey;
+if (openaiApiKey) openaiApiKeyInput.value = openaiApiKey;
 
 // Settings Modal Handlers
 settingsBtn.addEventListener('click', () => {
@@ -27,8 +31,10 @@ closeModalBtn.addEventListener('click', () => {
 });
 
 saveSettingsBtn.addEventListener('click', () => {
-    apiKey = apiKeyInput.value.trim();
-    localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
+    twitterApiKey = twitterApiKeyInput.value.trim();
+    openaiApiKey = openaiApiKeyInput.value.trim();
+    localStorage.setItem(TWITTER_API_KEY_STORAGE_KEY, twitterApiKey);
+    localStorage.setItem(OPENAI_API_KEY_STORAGE_KEY, openaiApiKey);
     settingsModal.classList.remove('show');
 });
 
@@ -46,7 +52,7 @@ const fetchTweets = async (username) => {
         method: 'POST',
         headers: {
             'content-type': 'application/json',
-            'X-RapidAPI-Key': apiKey,
+            'X-RapidAPI-Key': twitterApiKey,
             'X-RapidAPI-Host': 'twitter154.p.rapidapi.com'
         },
         body: JSON.stringify({
@@ -68,16 +74,73 @@ const fetchTweets = async (username) => {
     }
 };
 
-// Format Date
-const formatDate = (dateString) => {
-    const options = { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+// Generate Image from OpenAI
+const generateImage = async (prompt) => {
+    const url = 'https://api.openai.com/v1/images/generations';
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openaiApiKey}`
+        },
+        body: JSON.stringify({
+            model: "dall-e-3",
+            prompt: prompt,
+            n: 1,
+            size: "1024x1024"
+        })
     };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || 'Failed to generate image');
+        }
+        const result = await response.json();
+        return result.data[0].url;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// Create Prompt from Tweets
+const createPrompt = (tweets) => {
+    // Extract the main topics and activities from tweets
+    const tweetTexts = tweets.map(tweet => tweet.text).join(' ');
+    
+    // Remove URLs, mentions, and hashtags
+    const cleanText = tweetTexts
+        .replace(/https?:\/\/\S+/g, '')
+        .replace(/@\w+/g, '')
+        .replace(/#\w+/g, '')
+        .trim();
+
+    // Create a descriptive prompt
+    return `Create a single cohesive image that represents these activities and thoughts: ${cleanText}. 
+    Make it artistic and meaningful, focusing on the main themes and emotions. 
+    Style: Modern digital art with vibrant colors and clean lines. 
+    Ensure the image is appropriate and safe for all audiences.`;
+};
+
+// Display Loading State
+const showLoading = () => {
+    imageContainer.innerHTML = `
+        <div class="generating">
+            <div class="spinner"></div>
+            <div class="generating-text">Generating your image...</div>
+        </div>
+    `;
+};
+
+// Display Error
+const showError = (message) => {
+    imageContainer.innerHTML = `<div class="error">${message}</div>`;
+};
+
+// Display Image
+const displayImage = (imageUrl) => {
+    imageContainer.innerHTML = `<img src="${imageUrl}" alt="Generated visualization">`;
 };
 
 // Display Tweets
@@ -95,7 +158,7 @@ const displayTweets = (tweets) => {
         tweetElement.innerHTML = `
             <div class="tweet-text">${tweet.text}</div>
             <div class="tweet-meta">
-                <span>${formatDate(tweet.creation_date)}</span>
+                <span>${new Date(tweet.creation_date).toLocaleDateString()}</span>
                 <span>🔄 ${tweet.retweet_count} ❤️ ${tweet.favorite_count}</span>
             </div>
         `;
@@ -108,23 +171,36 @@ submitBtn.addEventListener('click', async () => {
     const username = twitterHandle.value.trim();
     
     if (!username) {
-        tweetsContainer.innerHTML = '<div class="error">Please enter a Twitter handle</div>';
+        showError('Please enter a Twitter handle');
         return;
     }
 
-    if (!apiKey) {
-        tweetsContainer.innerHTML = '<div class="error">Please set your RapidAPI key in settings</div>';
+    if (!twitterApiKey || !openaiApiKey) {
+        showError('Please set your API keys in settings');
         settingsModal.classList.add('show');
         return;
     }
 
+    showLoading();
     tweetsContainer.innerHTML = '<div class="loading">Loading tweets...</div>';
 
     try {
-        const tweets = await fetchTweets(username);
-        displayTweets(tweets.results || []);
+        // Fetch tweets
+        const tweetData = await fetchTweets(username);
+        const tweets = tweetData.results || [];
+        displayTweets(tweets);
+
+        if (tweets.length === 0) {
+            showError('No tweets found to generate image from');
+            return;
+        }
+
+        // Generate and display image
+        const prompt = createPrompt(tweets);
+        const imageUrl = await generateImage(prompt);
+        displayImage(imageUrl);
     } catch (error) {
-        tweetsContainer.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        showError(`Error: ${error.message}`);
     }
 });
 

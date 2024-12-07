@@ -12,6 +12,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    padding: 2rem 0;
 }
 
 .container {
@@ -149,9 +150,20 @@ button:hover {
     flex: 1;
 }
 
+.image-container {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.image-container img {
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 .tweets-container {
     margin-top: 2rem;
-    max-height: 500px;
+    max-height: 300px;
     overflow-y: auto;
 }
 
@@ -194,4 +206,34 @@ button:hover {
     background-color: rgba(255, 68, 68, 0.1);
     border-radius: 8px;
     margin-top: 1rem;
+}
+
+.generating {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    background-color: #253341;
+    border-radius: 12px;
+    margin: 2rem 0;
+}
+
+.generating-text {
+    color: #8899a6;
+    font-size: 1.1rem;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #38444d;
+    border-top: 4px solid #1da1f2;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
