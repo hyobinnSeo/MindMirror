@@ -13,6 +13,41 @@
             <span class="at-symbol">@</span>
             <input type="text" id="twitter-handle" placeholder="username" autocomplete="off">
         </div>
+        
+        <div class="form-section">
+            <div class="input-group">
+                <label for="age-range">Age Range:</label>
+                <select id="age-range">
+                    <option value="">Select age range</option>
+                    <option value="10s">Teens (10-19)</option>
+                    <option value="20s">Twenties (20-29)</option>
+                    <option value="30s">Thirties (30-39)</option>
+                    <option value="40s">Forties (40-49)</option>
+                    <option value="50s">Fifties (50-59)</option>
+                    <option value="60s">Sixties (60-69)</option>
+                    <option value="65+">Seventy and above (70+)</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="gender">Gender:</label>
+                <select id="gender">
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="image-style">Image Style:</label>
+                <select id="image-style">
+                    <option value="renaissance">Renaissance Oil Painting</option>
+                    <option value="photography">19th Century Photography</option>
+                    <option value="illustration">Classic Book Illustration</option>
+                    <option value="poster">Vintage Movie Poster</option>
+                    <option value="anime">Anime Character</option>
+                </select>
+            </div>
+        </div>
+
         <button id="submit-btn">Generate Image</button>
         <div id="image-container" class="image-container"></div>
         <div id="tweets-container" class="tweets-container"></div>
@@ -30,16 +65,6 @@
             <div class="input-group">
                 <label for="openai-api-key">OpenAI API Key:</label>
                 <input type="password" id="openai-api-key" placeholder="Enter your OpenAI API key">
-            </div>
-            <div class="input-group">
-                <label for="image-style">Image Style:</label>
-                <select id="image-style">
-                    <option value="renaissance">Renaissance Oil Painting</option>
-                    <option value="photography">19th Century Photography</option>
-                    <option value="illustration">Classic Book Illustration</option>
-                    <option value="poster">Vintage Movie Poster</option>
-                    <option value="anime">Anime Character</option>
-                </select>
             </div>
             <div class="input-group">
                 <label for="dalle-prompt">Custom DALL-E Prompt Template:</label>

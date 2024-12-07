@@ -11,6 +11,8 @@ const dallePromptInput = document.getElementById('dalle-prompt');
 const imageStyleSelect = document.getElementById('image-style');
 const saveSettingsBtn = document.getElementById('save-settings');
 const closeModalBtn = document.getElementById('close-modal');
+const ageRangeSelect = document.getElementById('age-range');
+const genderSelect = document.getElementById('gender');
 
 // Constants
 const TWITTER_API_KEY_STORAGE_KEY = 'twitter_api_key';
@@ -20,15 +22,15 @@ const IMAGE_STYLE_STORAGE_KEY = 'image_style';
 
 // Image Style Prompts
 const STYLE_PROMPTS = {
-    renaissance: "Create a scene in the style of a historical record painting, showing the user naturally engaged in their daily activities. Focus on authentic period details and natural composition, depicting: {tweets}",
-    photography: "Create a candid snapshot capturing a moment from everyday life, showing the user naturally engaged in their activities. Focus on genuine, unposed moments like those found in documentary photography: {tweets}",
-    illustration: "Create a scene like those found within story books, showing the user naturally engaged in their daily activities. Focus on warm, relatable moments that complement the narrative: {tweets}",
-    poster: "Create a natural scene from a movie, showing the user as a character engaged in their daily activities. Focus on authentic moments rather than promotional poses: {tweets}",
-    anime: "Create a slice-of-life anime scene, showing the user as a character naturally engaged in their daily activities. Focus on warm, everyday moments rather than action sequences: {tweets}"
+    renaissance: "Create a scene in the style of a historical record painting, showing a {gender} aged {age} naturally engaged in their daily activities. Focus on authentic period details and natural composition, depicting: {tweets}",
+    photography: "Create a candid snapshot capturing a moment from everyday life, showing a {gender} aged {age} naturally engaged in their activities. Focus on genuine, unposed moments like those found in documentary photography: {tweets}",
+    illustration: "Create a scene like those found within story books, showing a {gender} aged {age} naturally engaged in their daily activities. Focus on warm, relatable moments that complement the narrative: {tweets}",
+    poster: "Create a natural scene from a movie, showing a {gender} aged {age} as a character engaged in their daily activities. Focus on authentic moments rather than promotional poses: {tweets}",
+    anime: "Create a slice-of-life anime scene, showing a {gender} aged {age} as a character naturally engaged in their daily activities. Focus on warm, everyday moments rather than action sequences: {tweets}"
 };
 
 // Default DALL-E prompt template
-const DEFAULT_PROMPT = `Read the user's diary history and generate an image showing them naturally engaged in their daily activities.
+const DEFAULT_PROMPT = `Read the user's diary history and generate an image showing a {gender} aged {age} naturally engaged in their daily activities.
 Create a scene depicting their everyday life based on these entries: {tweets}
 Focus on authentic, natural moments that show what they actually do day-to-day.
 Make the scene appropriate and safe for all audiences.`;
@@ -45,15 +47,11 @@ if (openaiApiKey) openaiApiKeyInput.value = openaiApiKey;
 if (dallePrompt) dallePromptInput.value = dallePrompt;
 if (selectedStyle) imageStyleSelect.value = selectedStyle;
 
-// Update prompt input when style changes
+// Update localStorage when style changes
 imageStyleSelect.addEventListener('change', () => {
-    const selectedPrompt = STYLE_PROMPTS[imageStyleSelect.value];
-    dallePromptInput.value = selectedPrompt;
-    dallePromptInput.placeholder = selectedPrompt;
+    selectedStyle = imageStyleSelect.value;
+    localStorage.setItem(IMAGE_STYLE_STORAGE_KEY, selectedStyle);
 });
-
-// Trigger initial prompt update
-imageStyleSelect.dispatchEvent(new Event('change'));
 
 // Settings Modal Handlers
 settingsBtn.addEventListener('click', () => {
@@ -68,11 +66,9 @@ saveSettingsBtn.addEventListener('click', () => {
     twitterApiKey = twitterApiKeyInput.value.trim();
     openaiApiKey = openaiApiKeyInput.value.trim();
     dallePrompt = dallePromptInput.value.trim();
-    selectedStyle = imageStyleSelect.value;
     
     localStorage.setItem(TWITTER_API_KEY_STORAGE_KEY, twitterApiKey);
     localStorage.setItem(OPENAI_API_KEY_STORAGE_KEY, openaiApiKey);
-    localStorage.setItem(IMAGE_STYLE_STORAGE_KEY, selectedStyle);
     if (dallePrompt) {
         localStorage.setItem(DALLE_PROMPT_STORAGE_KEY, dallePrompt);
     } else {
@@ -160,9 +156,20 @@ const createPrompt = (tweets) => {
         .replace(/#\w+/g, '')
         .trim();
 
-    // Combine default prompt with style-specific prompt
-    const basePrompt = DEFAULT_PROMPT.replace('{tweets}', cleanText);
-    const stylePrompt = STYLE_PROMPTS[selectedStyle].replace('{tweets}', cleanText);
+    // Get user's age range and gender
+    const ageRange = ageRangeSelect.value;
+    const gender = genderSelect.value;
+
+    // Replace placeholders in prompts
+    const basePrompt = DEFAULT_PROMPT
+        .replace('{tweets}', cleanText)
+        .replace('{age}', ageRange)
+        .replace('{gender}', gender);
+
+    const stylePrompt = STYLE_PROMPTS[selectedStyle]
+        .replace('{tweets}', cleanText)
+        .replace('{age}', ageRange)
+        .replace('{gender}', gender);
     
     // Use custom prompt if provided, otherwise combine default and style prompts
     return dallePrompt || `${basePrompt}\n\n${stylePrompt}`;
@@ -214,9 +221,16 @@ const displayTweets = (tweets) => {
 // Handle Form Submission
 submitBtn.addEventListener('click', async () => {
     const username = twitterHandle.value.trim();
+    const ageRange = ageRangeSelect.value;
+    const gender = genderSelect.value;
     
     if (!username) {
         showError('Please enter a Twitter handle');
+        return;
+    }
+
+    if (!ageRange || !gender) {
+        showError('Please select both age range and gender');
         return;
     }
 
