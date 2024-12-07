@@ -154,7 +154,9 @@ const fetchTweets = async (username) => {
             throw new Error('Failed to fetch tweets');
         }
         const result = await response.json();
-        return result;
+        // Filter out retweets by checking if tweet text starts with "RT"
+        const nonRetweets = (result.results || []).filter(tweet => !tweet.text.trim().startsWith('RT'));
+        return { ...result, results: nonRetweets };
     } catch (error) {
         throw error;
     }
