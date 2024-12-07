@@ -37,8 +37,8 @@ const DEFAULT_STYLE_PROMPTS = {
         guide: "Render the scene as if captured through a vintage camera lens, with characteristic black and white tones and period-appropriate photographic techniques. Emphasize authentic composition and lighting typical of early photography while showcasing the character's daily life."
     },
     poster: {
-        name: "Netflix Series Poster",
-        guide: "Compose the scene with the sophisticated and contemporary style of streaming platform marketing, featuring bold typography, high-contrast imagery, and modern digital effects. Focus on creating an atmospheric mood that reflects current entertainment visual trends."
+        name: "TV Series Poster",
+        guide: "Compose the scene with the sophisticated and contemporary style of streaming platform marketing, featuring high-contrast imagery, and modern digital effects. Focus on creating an atmospheric mood that reflects current entertainment visual trends."
     },
     anime: {
         name: "Anime Style",
