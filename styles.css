@@ -60,7 +60,7 @@ h1 {
     margin-bottom: 0;
 }
 
-input, select {
+input, select, textarea {
     width: 100%;
     padding: 0.8rem;
     padding-left: 2.5rem;
@@ -70,6 +70,14 @@ input, select {
     color: #ffffff;
     font-size: 1.1rem;
     transition: border-color 0.3s ease;
+}
+
+textarea {
+    min-height: 100px;
+    border-radius: 12px;
+    padding: 1rem;
+    resize: vertical;
+    font-family: inherit;
 }
 
 .form-section input, .form-section select {
@@ -87,12 +95,12 @@ select {
     cursor: pointer;
 }
 
-input:focus, select:focus {
+input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: #1da1f2;
 }
 
-input::placeholder {
+input::placeholder, textarea::placeholder {
     color: #8899a6;
 }
 
@@ -168,7 +176,7 @@ button:hover {
     color: #8899a6;
 }
 
-.input-group input {
+.input-group input, .input-group textarea {
     padding-left: 1rem;
 }
 
@@ -179,6 +187,14 @@ button:hover {
 
 .modal-buttons button {
     flex: 1;
+}
+
+.reset-btn {
+    background-color: #794bc4;
+}
+
+.reset-btn:hover {
+    background-color: #6a43b0;
 }
 
 .image-container {

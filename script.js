@@ -7,42 +7,47 @@ const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const twitterApiKeyInput = document.getElementById('twitter-api-key');
 const openaiApiKeyInput = document.getElementById('openai-api-key');
-const dallePromptInput = document.getElementById('dalle-prompt');
 const imageStyleSelect = document.getElementById('image-style');
+const settingsStyleSelect = document.getElementById('settings-style-select');
+const stylePromptInput = document.getElementById('style-prompt');
 const saveSettingsBtn = document.getElementById('save-settings');
 const closeModalBtn = document.getElementById('close-modal');
+const resetPromptBtn = document.getElementById('reset-prompt');
 const ageRangeSelect = document.getElementById('age-range');
 const genderSelect = document.getElementById('gender');
 
 // Constants
 const TWITTER_API_KEY_STORAGE_KEY = 'twitter_api_key';
 const OPENAI_API_KEY_STORAGE_KEY = 'openai_api_key';
-const DALLE_PROMPT_STORAGE_KEY = 'dalle_prompt';
 const IMAGE_STYLE_STORAGE_KEY = 'image_style';
+const STYLE_PROMPTS_STORAGE_KEY = 'style_prompts';
 
-// Image Style Prompts
-const STYLE_PROMPTS = {
+// Default Image Style Prompts
+const DEFAULT_STYLE_PROMPTS = {
+    cinematic: {
+        name: "Cinematic Realism",
+        guide: "Craft the scene in a realism style, blending lifelike detail with a modern cinematic touch. Use muted tones, soft textures, and a moody, atmospheric environment to evoke emotion. Highlight the interplay of light and shadow to enhance the narrative depth and immerse the viewer in the moment."
+    },
     renaissance: {
         name: "Renaissance Oil Painting",
         guide: "Create the scene in the style of a Renaissance oil painting, with rich colors, dramatic lighting, and classical composition techniques. Focus on capturing the character's essence through traditional portraiture methods while maintaining historical accuracy in depicting their daily activities."
     },
     photography: {
         name: "19th Century Photography",
-        guide: "Render the scene as if captured through a vintage camera lens, with characteristic sepia tones and period-appropriate photographic techniques. Emphasize authentic composition and lighting typical of early photography while showcasing the character's daily life."
-    },
-    illustration: {
-        name: "Classic Book Illustration",
-        guide: "Design the scene in the style of traditional book illustrations, with detailed linework and careful attention to storytelling elements. Use techniques reminiscent of classic literary illustrations to bring the character's daily activities to life."
+        guide: "Render the scene as if captured through a vintage camera lens, with characteristic black and white tones and period-appropriate photographic techniques. Emphasize authentic composition and lighting typical of early photography while showcasing the character's daily life."
     },
     poster: {
-        name: "Vintage Movie Poster",
-        guide: "Compose the scene with the dramatic flair of vintage cinema posters, incorporating bold compositions and characteristic color palettes of the golden age of movie marketing, while maintaining focus on the character's authentic daily moments."
+        name: "Netflix Series Poster",
+        guide: "Compose the scene with the sophisticated and contemporary style of streaming platform marketing, featuring bold typography, high-contrast imagery, and modern digital effects. Focus on creating an atmospheric mood that reflects current entertainment visual trends."
     },
     anime: {
         name: "Anime Style",
         guide: "Create the scene in a Japanese anime art style, with clean lines, expressive features, and characteristic visual elements of the medium. Focus on slice-of-life moments that capture the character's daily activities in an authentic way."
     }
 };
+
+// Load style prompts from localStorage or use defaults
+let STYLE_PROMPTS = JSON.parse(localStorage.getItem(STYLE_PROMPTS_STORAGE_KEY)) || DEFAULT_STYLE_PROMPTS;
 
 // Default DALL-E prompt template
 const DEFAULT_PROMPT = `Generate an image depicting a single character's daily life. The character's details are:
@@ -59,14 +64,24 @@ Important: The generated image must realistically portray the character's activi
 // Load settings from localStorage
 let twitterApiKey = localStorage.getItem(TWITTER_API_KEY_STORAGE_KEY) || '';
 let openaiApiKey = localStorage.getItem(OPENAI_API_KEY_STORAGE_KEY) || '';
-let dallePrompt = localStorage.getItem(DALLE_PROMPT_STORAGE_KEY) || '';
-let selectedStyle = localStorage.getItem(IMAGE_STYLE_STORAGE_KEY) || 'renaissance';
+let selectedStyle = localStorage.getItem(IMAGE_STYLE_STORAGE_KEY) || 'cinematic';
 
 // Initialize form values
 if (twitterApiKey) twitterApiKeyInput.value = twitterApiKey;
 if (openaiApiKey) openaiApiKeyInput.value = openaiApiKey;
-if (dallePrompt) dallePromptInput.value = dallePrompt;
-if (selectedStyle) imageStyleSelect.value = selectedStyle;
+if (selectedStyle) {
+    imageStyleSelect.value = selectedStyle;
+    settingsStyleSelect.value = selectedStyle;
+}
+
+// Update style prompt input when style selection changes in settings
+settingsStyleSelect.addEventListener('change', () => {
+    const style = settingsStyleSelect.value;
+    stylePromptInput.value = STYLE_PROMPTS[style].guide;
+});
+
+// Initialize style prompt input with current style's guide
+stylePromptInput.value = STYLE_PROMPTS[settingsStyleSelect.value].guide;
 
 // Update localStorage when style changes
 imageStyleSelect.addEventListener('change', () => {
@@ -83,18 +98,24 @@ closeModalBtn.addEventListener('click', () => {
     settingsModal.classList.remove('show');
 });
 
+// Reset prompt to default value
+resetPromptBtn.addEventListener('click', () => {
+    const currentStyle = settingsStyleSelect.value;
+    stylePromptInput.value = DEFAULT_STYLE_PROMPTS[currentStyle].guide;
+});
+
 saveSettingsBtn.addEventListener('click', () => {
     twitterApiKey = twitterApiKeyInput.value.trim();
     openaiApiKey = openaiApiKeyInput.value.trim();
-    dallePrompt = dallePromptInput.value.trim();
     
+    // Save API keys
     localStorage.setItem(TWITTER_API_KEY_STORAGE_KEY, twitterApiKey);
     localStorage.setItem(OPENAI_API_KEY_STORAGE_KEY, openaiApiKey);
-    if (dallePrompt) {
-        localStorage.setItem(DALLE_PROMPT_STORAGE_KEY, dallePrompt);
-    } else {
-        localStorage.removeItem(DALLE_PROMPT_STORAGE_KEY);
-    }
+    
+    // Save style prompt
+    const currentStyle = settingsStyleSelect.value;
+    STYLE_PROMPTS[currentStyle].guide = stylePromptInput.value.trim();
+    localStorage.setItem(STYLE_PROMPTS_STORAGE_KEY, JSON.stringify(STYLE_PROMPTS));
     
     settingsModal.classList.remove('show');
 });
@@ -183,15 +204,12 @@ const createPrompt = (tweets) => {
     const style = STYLE_PROMPTS[selectedStyle];
 
     // Replace placeholders in prompt
-    const prompt = DEFAULT_PROMPT
+    return DEFAULT_PROMPT
         .replace('{diary}', cleanText)
         .replace('{age}', ageRange)
         .replace('{gender}', gender)
         .replace('{style_name}', style.name)
         .replace('{style_guide}', style.guide);
-    
-    // Use custom prompt if provided, otherwise use default
-    return dallePrompt || prompt;
 };
 
 // Display Loading State
