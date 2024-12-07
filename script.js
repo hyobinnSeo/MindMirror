@@ -44,7 +44,7 @@ const DEFAULT_STYLE_PROMPTS = {
     },
     anime: {
         name: "Anime Style",
-        guide: "Create the scene in a Japanese anime art style, with clean lines, expressive features, and characteristic visual elements of the medium. Focus on slice-of-life moments that capture the character's daily activities in an authentic way."
+        guide: "Create the scene in a Japanese anime art style, with expressive features, and characteristic visual elements of the medium. Focus on slice-of-life moments that capture the character's daily activities in an authentic way."
     }
 };
 
