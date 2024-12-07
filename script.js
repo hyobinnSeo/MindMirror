@@ -15,12 +15,14 @@ const closeModalBtn = document.getElementById('close-modal');
 const resetPromptBtn = document.getElementById('reset-prompt');
 const ageRangeSelect = document.getElementById('age-range');
 const genderSelect = document.getElementById('gender');
+const additionalPromptInput = document.getElementById('additional-prompt');
 
 // Constants
 const TWITTER_API_KEY_STORAGE_KEY = 'twitter_api_key';
 const OPENAI_API_KEY_STORAGE_KEY = 'openai_api_key';
 const IMAGE_STYLE_STORAGE_KEY = 'image_style';
 const STYLE_PROMPTS_STORAGE_KEY = 'style_prompts';
+const MAX_PROMPT_LENGTH = 4000;
 
 // Default Image Style Prompts
 const DEFAULT_STYLE_PROMPTS = {
@@ -59,7 +61,9 @@ Character's Diary History: {diary}
 Your image should follow the guidelines below:
 Style: {style_name}
 Guide: {style_guide}
-Important: The generated image must realistically portray the character's activities as described in their diary.`;
+Important: The generated image must realistically portray the character's activities as described in their diary.
+
+Additional Requirements: {additional_prompt}`;
 
 // Load settings from localStorage
 let twitterApiKey = localStorage.getItem(TWITTER_API_KEY_STORAGE_KEY) || '';
@@ -156,6 +160,40 @@ const fetchTweets = async (username) => {
     }
 };
 
+// Calculate available space for diary content
+const calculateAvailableSpace = (prompt, style) => {
+    // Create a prompt with all placeholders filled except diary
+    const testPrompt = prompt
+        .replace('{gender}', 'male')  // Use maximum length gender
+        .replace('{age}', '40s')      // Use typical age format
+        .replace('{diary}', '')       // Leave diary empty for calculation
+        .replace('{style_name}', style.name)
+        .replace('{style_guide}', style.guide)
+        .replace('{additional_prompt}', additionalPromptInput.value.trim() || 'None');
+    
+    return MAX_PROMPT_LENGTH - testPrompt.length;
+}
+
+// Truncate diary content to fit within limit
+const truncateDiary = (diary, maxLength) => {
+    if (diary.length <= maxLength) return diary;
+    
+    // Split into sentences
+    const sentences = diary.match(/[^.!?]+[.!?]+/g) || [];
+    let result = '';
+    
+    // Add sentences until we reach the limit
+    for (let sentence of sentences) {
+        if ((result + sentence).length <= maxLength) {
+            result += sentence;
+        } else {
+            break;
+        }
+    }
+    
+    return result.trim();
+}
+
 // Generate Image from OpenAI
 const generateImage = async (prompt) => {
     const url = 'https://api.openai.com/v1/images/generations';
@@ -202,14 +240,21 @@ const createPrompt = (tweets) => {
     const ageRange = ageRangeSelect.value;
     const gender = genderSelect.value;
     const style = STYLE_PROMPTS[selectedStyle];
+    
+    // Calculate available space for diary content
+    const availableSpace = calculateAvailableSpace(DEFAULT_PROMPT, style);
+    
+    // Truncate diary content if needed
+    const truncatedDiary = truncateDiary(cleanText, availableSpace);
 
     // Replace placeholders in prompt
     return DEFAULT_PROMPT
-        .replace('{diary}', cleanText)
+        .replace('{diary}', truncatedDiary)
         .replace('{age}', ageRange)
         .replace('{gender}', gender)
         .replace('{style_name}', style.name)
-        .replace('{style_guide}', style.guide);
+        .replace('{style_guide}', style.guide)
+        .replace('{additional_prompt}', additionalPromptInput.value.trim() || 'None');
 };
 
 // Display Loading State
