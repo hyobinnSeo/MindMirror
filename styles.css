@@ -122,15 +122,12 @@ button:hover {
 }
 
 .settings-btn {
-    position: fixed;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
     width: auto;
     padding: 0.8rem 1.5rem;
     background-color: #253341;
     border: 2px solid #38444d;
     font-size: 1rem;
+    margin-top: 2rem;
 }
 
 .settings-btn:hover {
@@ -159,6 +156,8 @@ button:hover {
     border-radius: 15px;
     width: 90%;
     max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .modal h2 {
