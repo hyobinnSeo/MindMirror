@@ -31,6 +31,20 @@
                 <label for="openai-api-key">OpenAI API Key:</label>
                 <input type="password" id="openai-api-key" placeholder="Enter your OpenAI API key">
             </div>
+            <div class="input-group">
+                <label for="image-style">Image Style:</label>
+                <select id="image-style">
+                    <option value="renaissance">Renaissance Oil Painting</option>
+                    <option value="photography">19th Century Photography</option>
+                    <option value="illustration">Classic Book Illustration</option>
+                    <option value="poster">Vintage Movie Poster</option>
+                    <option value="anime">Anime Character</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="dalle-prompt">Custom DALL-E Prompt Template:</label>
+                <input type="text" id="dalle-prompt" placeholder="Enter your custom DALL-E prompt">
+            </div>
             <div class="modal-buttons">
                 <button id="save-settings">Save</button>
                 <button id="close-modal">Cancel</button>

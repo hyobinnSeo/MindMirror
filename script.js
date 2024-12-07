@@ -7,19 +7,53 @@ const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const twitterApiKeyInput = document.getElementById('twitter-api-key');
 const openaiApiKeyInput = document.getElementById('openai-api-key');
+const dallePromptInput = document.getElementById('dalle-prompt');
+const imageStyleSelect = document.getElementById('image-style');
 const saveSettingsBtn = document.getElementById('save-settings');
 const closeModalBtn = document.getElementById('close-modal');
 
 // Constants
 const TWITTER_API_KEY_STORAGE_KEY = 'twitter_api_key';
 const OPENAI_API_KEY_STORAGE_KEY = 'openai_api_key';
+const DALLE_PROMPT_STORAGE_KEY = 'dalle_prompt';
+const IMAGE_STYLE_STORAGE_KEY = 'image_style';
 
-// Load API keys from localStorage
+// Image Style Prompts
+const STYLE_PROMPTS = {
+    renaissance: "Create a scene in the style of a historical record painting, showing the user naturally engaged in their daily activities. Focus on authentic period details and natural composition, depicting: {tweets}",
+    photography: "Create a candid snapshot capturing a moment from everyday life, showing the user naturally engaged in their activities. Focus on genuine, unposed moments like those found in documentary photography: {tweets}",
+    illustration: "Create a scene like those found within story books, showing the user naturally engaged in their daily activities. Focus on warm, relatable moments that complement the narrative: {tweets}",
+    poster: "Create a natural scene from a movie, showing the user as a character engaged in their daily activities. Focus on authentic moments rather than promotional poses: {tweets}",
+    anime: "Create a slice-of-life anime scene, showing the user as a character naturally engaged in their daily activities. Focus on warm, everyday moments rather than action sequences: {tweets}"
+};
+
+// Default DALL-E prompt template
+const DEFAULT_PROMPT = `Read the user's diary history and generate an image showing them naturally engaged in their daily activities.
+Create a scene depicting their everyday life based on these entries: {tweets}
+Focus on authentic, natural moments that show what they actually do day-to-day.
+Make the scene appropriate and safe for all audiences.`;
+
+// Load settings from localStorage
 let twitterApiKey = localStorage.getItem(TWITTER_API_KEY_STORAGE_KEY) || '';
 let openaiApiKey = localStorage.getItem(OPENAI_API_KEY_STORAGE_KEY) || '';
+let dallePrompt = localStorage.getItem(DALLE_PROMPT_STORAGE_KEY) || '';
+let selectedStyle = localStorage.getItem(IMAGE_STYLE_STORAGE_KEY) || 'renaissance';
 
+// Initialize form values
 if (twitterApiKey) twitterApiKeyInput.value = twitterApiKey;
 if (openaiApiKey) openaiApiKeyInput.value = openaiApiKey;
+if (dallePrompt) dallePromptInput.value = dallePrompt;
+if (selectedStyle) imageStyleSelect.value = selectedStyle;
+
+// Update prompt input when style changes
+imageStyleSelect.addEventListener('change', () => {
+    const selectedPrompt = STYLE_PROMPTS[imageStyleSelect.value];
+    dallePromptInput.value = selectedPrompt;
+    dallePromptInput.placeholder = selectedPrompt;
+});
+
+// Trigger initial prompt update
+imageStyleSelect.dispatchEvent(new Event('change'));
 
 // Settings Modal Handlers
 settingsBtn.addEventListener('click', () => {
@@ -33,8 +67,18 @@ closeModalBtn.addEventListener('click', () => {
 saveSettingsBtn.addEventListener('click', () => {
     twitterApiKey = twitterApiKeyInput.value.trim();
     openaiApiKey = openaiApiKeyInput.value.trim();
+    dallePrompt = dallePromptInput.value.trim();
+    selectedStyle = imageStyleSelect.value;
+    
     localStorage.setItem(TWITTER_API_KEY_STORAGE_KEY, twitterApiKey);
     localStorage.setItem(OPENAI_API_KEY_STORAGE_KEY, openaiApiKey);
+    localStorage.setItem(IMAGE_STYLE_STORAGE_KEY, selectedStyle);
+    if (dallePrompt) {
+        localStorage.setItem(DALLE_PROMPT_STORAGE_KEY, dallePrompt);
+    } else {
+        localStorage.removeItem(DALLE_PROMPT_STORAGE_KEY);
+    }
+    
     settingsModal.classList.remove('show');
 });
 
@@ -116,11 +160,12 @@ const createPrompt = (tweets) => {
         .replace(/#\w+/g, '')
         .trim();
 
-    // Create a descriptive prompt
-    return `Create a single cohesive image that represents these activities and thoughts: ${cleanText}. 
-    Make it artistic and meaningful, focusing on the main themes and emotions. 
-    Style: Modern digital art with vibrant colors and clean lines. 
-    Ensure the image is appropriate and safe for all audiences.`;
+    // Combine default prompt with style-specific prompt
+    const basePrompt = DEFAULT_PROMPT.replace('{tweets}', cleanText);
+    const stylePrompt = STYLE_PROMPTS[selectedStyle].replace('{tweets}', cleanText);
+    
+    // Use custom prompt if provided, otherwise combine default and style prompts
+    return dallePrompt || `${basePrompt}\n\n${stylePrompt}`;
 };
 
 // Display Loading State

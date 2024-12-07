@@ -44,7 +44,7 @@ h1 {
     font-size: 1.2rem;
 }
 
-input {
+input, select {
     width: 100%;
     padding: 0.8rem;
     padding-left: 2.5rem;
@@ -56,7 +56,17 @@ input {
     transition: border-color 0.3s ease;
 }
 
-input:focus {
+select {
+    padding-left: 1rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231da1f2' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+    cursor: pointer;
+}
+
+input:focus, select:focus {
     outline: none;
     border-color: #1da1f2;
 }
