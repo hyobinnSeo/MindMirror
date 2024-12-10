@@ -33,6 +33,9 @@ h1 {
 .input-container {
     position: relative;
     margin-bottom: 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
 }
 
 .at-symbol {
@@ -42,6 +45,22 @@ h1 {
     transform: translateY(-50%);
     color: #1da1f2;
     font-size: 1.2rem;
+}
+
+#twitter-handle {
+    flex: 1;
+}
+
+.fetch-tweets-btn {
+    width: auto;
+    white-space: nowrap;
+    padding: 0.8rem 1.2rem;
+    background-color: #253341;
+    border: 2px solid #38444d;
+}
+
+.fetch-tweets-btn:hover {
+    background-color: #38444d;
 }
 
 .form-section {
@@ -245,13 +264,24 @@ button:hover {
     padding: 1rem;
 }
 
-.error {
-    color: #ff4444;
+.error, .success {
     text-align: center;
     padding: 1rem;
-    background-color: rgba(255, 68, 68, 0.1);
     border-radius: 8px;
     margin-top: 1rem;
+    font-weight: 500;
+}
+
+.error {
+    color: #ff4444;
+    background-color: rgba(255, 68, 68, 0.1);
+    border: 1px solid rgba(255, 68, 68, 0.2);
+}
+
+.success {
+    color: #00c851;
+    background-color: rgba(0, 200, 81, 0.1);
+    border: 1px solid rgba(0, 200, 81, 0.2);
 }
 
 .generating {

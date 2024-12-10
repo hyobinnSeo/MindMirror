@@ -1,6 +1,7 @@
 // DOM Elements
 const twitterHandle = document.getElementById('twitter-handle');
-const submitBtn = document.getElementById('submit-btn');
+const fetchTweetsBtn = document.getElementById('fetch-tweets-btn');
+const generateImageBtn = document.getElementById('generate-image-btn');
 const imageContainer = document.getElementById('image-container');
 const tweetsContainer = document.getElementById('tweets-container');
 const settingsBtn = document.getElementById('settings-btn');
@@ -122,6 +123,9 @@ saveSettingsBtn.addEventListener('click', () => {
     localStorage.setItem(STYLE_PROMPTS_STORAGE_KEY, JSON.stringify(STYLE_PROMPTS));
     
     settingsModal.classList.remove('show');
+    
+    // Show success message in tweets container
+    showMessage(tweetsContainer, 'Settings saved successfully! You can now fetch tweets and generate images.', 'success');
 });
 
 // Close modal when clicking outside
@@ -260,18 +264,18 @@ const createPrompt = (tweets) => {
 };
 
 // Display Loading State
-const showLoading = () => {
-    imageContainer.innerHTML = `
+const showLoading = (container, message) => {
+    container.innerHTML = `
         <div class="generating">
             <div class="spinner"></div>
-            <div class="generating-text">Generating your image...</div>
+            <div class="generating-text">${message}</div>
         </div>
     `;
 };
 
-// Display Error
-const showError = (message) => {
-    imageContainer.innerHTML = `<div class="error">${message}</div>`;
+// Display Message (Error or Success)
+const showMessage = (container, message, type = 'error') => {
+    container.innerHTML = `<div class="${type}">${message}</div>`;
 };
 
 // Display Image
@@ -284,7 +288,7 @@ const displayTweets = (tweets) => {
     tweetsContainer.innerHTML = '';
     
     if (!tweets || tweets.length === 0) {
-        tweetsContainer.innerHTML = '<div class="error">No tweets found</div>';
+        showMessage(tweetsContainer, 'No tweets found');
         return;
     }
 
@@ -302,54 +306,70 @@ const displayTweets = (tweets) => {
     });
 };
 
-// Handle Form Submission
-submitBtn.addEventListener('click', async () => {
+// Handle Tweet Fetching
+fetchTweetsBtn.addEventListener('click', async () => {
     const username = twitterHandle.value.trim();
-    const ageRange = ageRangeSelect.value;
-    const gender = genderSelect.value;
     
     if (!username) {
-        showError('Please enter a Twitter handle');
+        showMessage(tweetsContainer, 'Please enter a Twitter handle');
         return;
     }
 
-    if (!ageRange || !gender) {
-        showError('Please select both age range and gender');
+    if (!twitterApiKey) {
+        showMessage(tweetsContainer, 'Twitter API key not set. Click the ⚙️ Settings button below to add your API key.');
         return;
     }
 
-    if (!twitterApiKey || !openaiApiKey) {
-        showError('Please set your API keys in settings');
-        settingsModal.classList.add('show');
-        return;
-    }
-
-    showLoading();
-    tweetsContainer.innerHTML = '<div class="loading">Loading tweets...</div>';
+    showLoading(tweetsContainer, 'Loading tweets...');
 
     try {
-        // Fetch tweets
         const tweetData = await fetchTweets(username);
         const tweets = tweetData.results || [];
         displayTweets(tweets);
+    } catch (error) {
+        showMessage(tweetsContainer, `Error: ${error.message}`);
+    }
+});
 
-        if (tweets.length === 0) {
-            showError('No tweets found to generate image from');
-            return;
-        }
+// Handle Image Generation
+generateImageBtn.addEventListener('click', async () => {
+    const tweets = Array.from(tweetsContainer.querySelectorAll('.tweet'))
+        .map(tweet => ({
+            text: tweet.querySelector('.tweet-text').textContent
+        }));
 
-        // Generate and display image
+    if (tweets.length === 0) {
+        showMessage(imageContainer, 'Please fetch tweets first');
+        return;
+    }
+
+    const ageRange = ageRangeSelect.value;
+    const gender = genderSelect.value;
+
+    if (!ageRange || !gender) {
+        showMessage(imageContainer, 'Please select both age range and gender');
+        return;
+    }
+
+    if (!openaiApiKey) {
+        showMessage(imageContainer, 'OpenAI API key not set. Click the ⚙️ Settings button below to add your API key.');
+        return;
+    }
+
+    showLoading(imageContainer, 'Generating your image...');
+
+    try {
         const prompt = createPrompt(tweets);
         const imageUrl = await generateImage(prompt);
         displayImage(imageUrl);
     } catch (error) {
-        showError(`Error: ${error.message}`);
+        showMessage(imageContainer, `Error: ${error.message}`);
     }
 });
 
-// Handle Enter key press
+// Handle Enter key press for tweet fetching
 twitterHandle.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-        submitBtn.click();
+        fetchTweetsBtn.click();
     }
 });
