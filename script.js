@@ -166,39 +166,32 @@ const fetchTweets = async (username) => {
     }
 };
 
-// Calculate available space for diary content
-const calculateAvailableSpace = (prompt, style) => {
-    // Create a prompt with all placeholders filled except diary
-    const testPrompt = prompt
-        .replace('{gender}', 'male')  // Use maximum length gender
-        .replace('{age}', '40s')      // Use typical age format
-        .replace('{diary}', '')       // Leave diary empty for calculation
+// Create Initial Prompt from Tweets (for GPT-4)
+const createPrompt = (tweets) => {
+    // Extract the main topics and activities from tweets
+    const tweetTexts = tweets.map(tweet => tweet.text).join(' ');
+    
+    // Remove URLs, mentions, and hashtags
+    const cleanText = tweetTexts
+        .replace(/https?:\/\/\S+/g, '')
+        .replace(/@\w+/g, '')
+        .replace(/#\w+/g, '')
+        .trim();
+
+    // Get user's age range and gender
+    const ageRange = ageRangeSelect.value;
+    const gender = genderSelect.value;
+    const style = STYLE_PROMPTS[selectedStyle];
+
+    // Create full prompt without truncation for GPT-4
+    return DEFAULT_PROMPT
+        .replace('{diary}', cleanText)
+        .replace('{age}', ageRange)
+        .replace('{gender}', gender)
         .replace('{style_name}', style.name)
         .replace('{style_guide}', style.guide)
         .replace('{additional_prompt}', additionalPromptInput.value.trim() || 'None');
-    
-    return MAX_PROMPT_LENGTH - testPrompt.length;
-}
-
-// Truncate diary content to fit within limit
-const truncateDiary = (diary, maxLength) => {
-    if (diary.length <= maxLength) return diary;
-    
-    // Split into sentences
-    const sentences = diary.match(/[^.!?]+[.!?]+/g) || [];
-    let result = '';
-    
-    // Add sentences until we reach the limit
-    for (let sentence of sentences) {
-        if ((result + sentence).length <= maxLength) {
-            result += sentence;
-        } else {
-            break;
-        }
-    }
-    
-    return result.trim();
-}
+};
 
 // Generate Image Prompt from GPT-4
 const generateImagePrompt = async (initialPrompt) => {
@@ -210,10 +203,10 @@ const generateImagePrompt = async (initialPrompt) => {
             'Authorization': `Bearer ${openaiApiKey}`
         },
         body: JSON.stringify({
-            model: "gpt-4o",
+            model: "gpt-4",
             messages: [{
                 role: "system",
-                content: "You are an expert at creating detailed, vivid image generation prompts. Your task is to take the provided context and create a specific, detailed prompt that will result in a high-quality, cohesive image that captures the essence of the person and their activities."
+                content: "You are an expert at creating detailed, vivid image generation prompts. Your task is to take the provided context and create a specific, detailed prompt that will result in a high-quality, cohesive image that captures the essence of the person and their activities. Your prompt must be under 4,000 characters to work with DALL-E 3."
             }, {
                 role: "user",
                 content: initialPrompt
@@ -228,7 +221,14 @@ const generateImagePrompt = async (initialPrompt) => {
             throw new Error(error.error?.message || 'Failed to generate image prompt');
         }
         const result = await response.json();
-        return result.choices[0].message.content;
+        const generatedPrompt = result.choices[0].message.content;
+        
+        // Validate DALL-E prompt length
+        if (generatedPrompt.length > MAX_PROMPT_LENGTH) {
+            throw new Error(`Generated prompt exceeds DALL-E's ${MAX_PROMPT_LENGTH} character limit. Please try with fewer tweets.`);
+        }
+        
+        return generatedPrompt;
     } catch (error) {
         throw error;
     }
@@ -236,6 +236,11 @@ const generateImagePrompt = async (initialPrompt) => {
 
 // Generate Image from OpenAI
 const generateImage = async (prompt) => {
+    // Validate DALL-E prompt length
+    if (prompt.length > MAX_PROMPT_LENGTH) {
+        throw new Error(`Prompt exceeds DALL-E's ${MAX_PROMPT_LENGTH} character limit`);
+    }
+
     const url = 'https://api.openai.com/v1/images/generations';
     const options = {
         method: 'POST',
@@ -262,39 +267,6 @@ const generateImage = async (prompt) => {
     } catch (error) {
         throw error;
     }
-};
-
-// Create Prompt from Tweets
-const createPrompt = (tweets) => {
-    // Extract the main topics and activities from tweets
-    const tweetTexts = tweets.map(tweet => tweet.text).join(' ');
-    
-    // Remove URLs, mentions, and hashtags
-    const cleanText = tweetTexts
-        .replace(/https?:\/\/\S+/g, '')
-        .replace(/@\w+/g, '')
-        .replace(/#\w+/g, '')
-        .trim();
-
-    // Get user's age range and gender
-    const ageRange = ageRangeSelect.value;
-    const gender = genderSelect.value;
-    const style = STYLE_PROMPTS[selectedStyle];
-    
-    // Calculate available space for diary content
-    const availableSpace = calculateAvailableSpace(DEFAULT_PROMPT, style);
-    
-    // Truncate diary content if needed
-    const truncatedDiary = truncateDiary(cleanText, availableSpace);
-
-    // Replace placeholders in prompt
-    return DEFAULT_PROMPT
-        .replace('{diary}', truncatedDiary)
-        .replace('{age}', ageRange)
-        .replace('{gender}', gender)
-        .replace('{style_name}', style.name)
-        .replace('{style_guide}', style.guide)
-        .replace('{additional_prompt}', additionalPromptInput.value.trim() || 'None');
 };
 
 // Display Loading State
@@ -393,7 +365,7 @@ generateImageBtn.addEventListener('click', async () => {
     showLoading(imageContainer, 'Generating your image...');
 
     try {
-        // First, create the initial prompt
+        // First, create the initial prompt with full tweet content
         const initialPrompt = createPrompt(tweets);
         
         // Generate the refined image prompt using GPT-4
