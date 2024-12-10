@@ -200,6 +200,40 @@ const truncateDiary = (diary, maxLength) => {
     return result.trim();
 }
 
+// Generate Image Prompt from GPT-4
+const generateImagePrompt = async (initialPrompt) => {
+    const url = 'https://api.openai.com/v1/chat/completions';
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openaiApiKey}`
+        },
+        body: JSON.stringify({
+            model: "gpt-4o",
+            messages: [{
+                role: "system",
+                content: "You are an expert at creating detailed, vivid image generation prompts. Your task is to take the provided context and create a specific, detailed prompt that will result in a high-quality, cohesive image that captures the essence of the person and their activities."
+            }, {
+                role: "user",
+                content: initialPrompt
+            }]
+        })
+    };
+
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || 'Failed to generate image prompt');
+        }
+        const result = await response.json();
+        return result.choices[0].message.content;
+    } catch (error) {
+        throw error;
+    }
+};
+
 // Generate Image from OpenAI
 const generateImage = async (prompt) => {
     const url = 'https://api.openai.com/v1/images/generations';
@@ -359,8 +393,16 @@ generateImageBtn.addEventListener('click', async () => {
     showLoading(imageContainer, 'Generating your image...');
 
     try {
-        const prompt = createPrompt(tweets);
-        const imageUrl = await generateImage(prompt);
+        // First, create the initial prompt
+        const initialPrompt = createPrompt(tweets);
+        
+        // Generate the refined image prompt using GPT-4
+        showLoading(imageContainer, 'Creating detailed image prompt...');
+        const refinedPrompt = await generateImagePrompt(initialPrompt);
+        
+        // Generate the final image using the refined prompt
+        showLoading(imageContainer, 'Generating final image...');
+        const imageUrl = await generateImage(refinedPrompt);
         displayImage(imageUrl);
     } catch (error) {
         showMessage(imageContainer, `Error: ${error.message}`);
