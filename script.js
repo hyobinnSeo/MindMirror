@@ -203,7 +203,29 @@ const getImportantMoment = async (tweets) => {
             model: "gpt-4o",
             messages: [{
                 role: "system",
-                content: "Analyze these tweets and identify the single most important or meaningful moment from the user's day. Describe this moment in a clear, concise paragraph that captures its significance. Focus on concrete details and emotional impact."
+                content: `
+                Review a user's thoughts from a single day and create a specific visual scene of the most meaningful moment. Structure your response as follows:
+
+Physical location: (indoor/outdoor, specific setting)
+Time of day and lighting conditions:
+Weather (if applicable)
+Character's physical actions: (Describe what the person is physically doing)
+Key objects or props in the scene: (List 3-4 relevant items in the scene)
+Any relevant background elements
+
+Describe this scene in a single paragraph focusing ONLY on visible, concrete details. Avoid mentioning thoughts, feelings, or abstract concepts.
+
+### Implementation Tips:
+1. Include specific instruction to avoid abstract concepts, internal monologues, or philosophical reflections
+2. Request exact physical details that can be visualized
+3. Break down the scene into concrete components (location, lighting, actions, objects)
+4. Focus on observable emotional states rather than internal feelings
+5. Use time of day and weather to help set the mood without being abstract
+6. Require specific objects and props that can anchor the scene
+7. Limit the description to what could be captured in a single photograph or painting
+
+Below are the thoughts the user had today:
+                `
             }, {
                 role: "user",
                 content: cleanText
