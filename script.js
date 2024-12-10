@@ -56,14 +56,17 @@ const DEFAULT_STYLE_PROMPTS = {
 let STYLE_PROMPTS = JSON.parse(localStorage.getItem(STYLE_PROMPTS_STORAGE_KEY)) || DEFAULT_STYLE_PROMPTS;
 
 // Default DALL-E prompt template
-const DEFAULT_PROMPT = `The character's details are:
+const DEFAULT_PROMPT = `
+Generate an image depicting a single character's daily life.
 
+Character details:
 Gender: {gender}
 Age: {age}
-Character's Diary History: {diary}
+
+Style Guidelines:
 Style: {style_name}
 Guide: {style_guide}
-Important: The generated image must realistically portray the character's activities as described in their diary.
+The important moment from the character's day: {important_moment}
 
 Additional Requirements: {additional_prompt}`;
 
@@ -178,10 +181,9 @@ const fetchTweets = async (username) => {
     }
 };
 
-// Create Initial Prompt from Tweets (for GPT-4)
-const createPrompt = (tweets) => {
-    // Extract the main topics and activities from tweets
-    const tweetTexts = tweets.map(tweet => tweet.text).join(' ');
+// Get Important Moment from GPT-4
+const getImportantMoment = async (tweets) => {
+    const tweetTexts = tweets.map(tweet => tweet.text).join('\n');
     
     // Remove URLs, mentions, and hashtags
     const cleanText = tweetTexts
@@ -190,23 +192,6 @@ const createPrompt = (tweets) => {
         .replace(/#\w+/g, '')
         .trim();
 
-    // Get user's age range and gender
-    const ageRange = ageRangeSelect.value;
-    const gender = genderSelect.value;
-    const style = STYLE_PROMPTS[selectedStyle];
-
-    // Create full prompt without truncation for GPT-4
-    return DEFAULT_PROMPT
-        .replace('{diary}', cleanText)
-        .replace('{age}', ageRange)
-        .replace('{gender}', gender)
-        .replace('{style_name}', style.name)
-        .replace('{style_guide}', style.guide)
-        .replace('{additional_prompt}', additionalPromptInput.value.trim() || 'None');
-};
-
-// Generate Image Prompt from GPT-4
-const generateImagePrompt = async (initialPrompt) => {
     const url = 'https://api.openai.com/v1/chat/completions';
     const options = {
         method: 'POST',
@@ -218,10 +203,10 @@ const generateImagePrompt = async (initialPrompt) => {
             model: "gpt-4o",
             messages: [{
                 role: "system",
-                content: "Your task is to take the provided context and create a specific, detailed prompt that will result in a high-quality, cohesive image that captures the essence of the person and their activities. Your prompt must be under 4,000 characters to work with DALL-E 3."
+                content: "Analyze these tweets and identify the single most important or meaningful moment from the user's day. Describe this moment in a clear, concise paragraph that captures its significance. Focus on concrete details and emotional impact."
             }, {
                 role: "user",
-                content: initialPrompt
+                content: cleanText
             }]
         })
     };
@@ -230,20 +215,29 @@ const generateImagePrompt = async (initialPrompt) => {
         const response = await fetch(url, options);
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error?.message || 'Failed to generate image prompt');
+            throw new Error(error.error?.message || 'Failed to analyze tweets');
         }
         const result = await response.json();
-        const generatedPrompt = result.choices[0].message.content;
-        
-        // Validate DALL-E prompt length
-        if (generatedPrompt.length > MAX_PROMPT_LENGTH) {
-            throw new Error(`Generated prompt exceeds DALL-E's ${MAX_PROMPT_LENGTH} character limit. Please try with fewer tweets.`);
-        }
-        
-        return generatedPrompt;
+        return result.choices[0].message.content;
     } catch (error) {
         throw error;
     }
+};
+
+// Create Image Prompt
+const createPrompt = (importantMoment) => {
+    // Get user's age range and gender
+    const ageRange = ageRangeSelect.value;
+    const gender = genderSelect.value;
+    const style = STYLE_PROMPTS[selectedStyle];
+
+    return DEFAULT_PROMPT
+        .replace('{important_moment}', importantMoment)
+        .replace('{age}', ageRange)
+        .replace('{gender}', gender)
+        .replace('{style_name}', style.name)
+        .replace('{style_guide}', style.guide)
+        .replace('{additional_prompt}', additionalPromptInput.value.trim() || 'None');
 };
 
 // Generate Image from OpenAI
@@ -383,20 +377,19 @@ generateImageBtn.addEventListener('click', async () => {
         return;
     }
 
-    showLoading(imageContainer, 'Generating your image...');
+    showLoading(imageContainer, 'Analyzing tweets...');
 
     try {
-        // First, create the initial prompt with full tweet content
-        const initialPrompt = createPrompt(tweets);
+        // First, get the most important moment from the tweets
+        const importantMoment = await getImportantMoment(tweets);
         
-        // Generate the refined image prompt using GPT-4
-        showLoading(imageContainer, 'Creating detailed image prompt...');
-        const refinedPrompt = await generateImagePrompt(initialPrompt);
+        // Create the prompt with the important moment
+        showLoading(imageContainer, 'Creating image...');
+        const prompt = createPrompt(importantMoment);
         
-        // Generate the final image using the refined prompt
-        showLoading(imageContainer, 'Generating final image...');
-        const imageUrl = await generateImage(refinedPrompt);
-        displayImage(imageUrl, refinedPrompt);
+        // Generate the image using DALL-E 3
+        const imageUrl = await generateImage(prompt);
+        displayImage(imageUrl, prompt);
     } catch (error) {
         showMessage(imageContainer, `Error: ${error.message}`);
     }
