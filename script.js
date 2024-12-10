@@ -36,11 +36,11 @@ const DEFAULT_STYLE_PROMPTS = {
     },
     renaissance: {
         name: "Renaissance Oil Painting",
-        guide: "Create the scene in the style of a Renaissance oil painting, with rich colors, dramatic lighting, and classical composition techniques. Focus on capturing the character's essence through traditional portraiture methods while maintaining historical accuracy in depicting their daily activities."
+        guide: "Create the scene in the style of a Renaissance oil painting, with rich colors, dramatic lighting, and classical composition techniques. Focus on capturing the character's essence through traditional portraiture methods."
     },
     photography: {
         name: "19th Century Photography",
-        guide: "Render the scene as if captured through a vintage camera lens, with characteristic black and white tones and period-appropriate photographic techniques. Emphasize authentic composition and lighting typical of early photography while showcasing the character's daily life."
+        guide: "Render the scene as if captured through a vintage camera lens, with characteristic black and white tones. Emphasize authentic composition and lighting typical of early photography while showcasing the character's daily life."
     },
     poster: {
         name: "TV Series Poster",
@@ -48,7 +48,11 @@ const DEFAULT_STYLE_PROMPTS = {
     },
     anime: {
         name: "Anime Style",
-        guide: "Create the scene in a Japanese anime art style, with expressive features, and characteristic visual elements of the medium. Focus on slice-of-life moments that capture the character's daily activities in an authentic way."
+        guide: "Create the scene in a anime art style, with expressive features, and characteristic visual elements of the medium. Focus on slice-of-life moments that capture the character's daily activities in an authentic way."
+    },
+    animation_3D: {
+        name: "3D Animation",
+        guide: "Create the scene in the style of modern Disney/DreamWorks 3D animation. Use highly polished 3D rendering with exaggerated yet believable proportions.The character should have highly expressive features with slightly enlarged eyes and enhanced emotional range typical of Disney/DreamWorks characters."
     }
 };
 
@@ -208,7 +212,7 @@ const getImportantMoment = async (tweets) => {
 
 Physical location: (indoor/outdoor, specific setting)
 Time of day and lighting conditions:
-Weather (if applicable)
+Weather: (if applicable)
 Character's physical actions: (Describe what the person is physically doing)
 Key objects or props in the scene: (List 3-4 relevant items in the scene)
 Any relevant background elements
