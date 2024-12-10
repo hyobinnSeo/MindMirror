@@ -17,6 +17,9 @@ const resetPromptBtn = document.getElementById('reset-prompt');
 const ageRangeSelect = document.getElementById('age-range');
 const genderSelect = document.getElementById('gender');
 const additionalPromptInput = document.getElementById('additional-prompt');
+const promptPopup = document.getElementById('prompt-popup');
+const promptText = document.querySelector('.prompt-text');
+const closePromptBtn = document.querySelector('.close-prompt');
 
 // Constants
 const TWITTER_API_KEY_STORAGE_KEY = 'twitter_api_key';
@@ -53,13 +56,11 @@ const DEFAULT_STYLE_PROMPTS = {
 let STYLE_PROMPTS = JSON.parse(localStorage.getItem(STYLE_PROMPTS_STORAGE_KEY)) || DEFAULT_STYLE_PROMPTS;
 
 // Default DALL-E prompt template
-const DEFAULT_PROMPT = `Generate an image depicting a single character's daily life. The character's details are:
+const DEFAULT_PROMPT = `The character's details are:
 
 Gender: {gender}
 Age: {age}
 Character's Diary History: {diary}
-
-Your image should follow the guidelines below:
 Style: {style_name}
 Guide: {style_guide}
 Important: The generated image must realistically portray the character's activities as described in their diary.
@@ -135,6 +136,17 @@ settingsModal.addEventListener('click', (e) => {
     }
 });
 
+// Prompt Popup Handlers
+closePromptBtn.addEventListener('click', () => {
+    promptPopup.classList.remove('show');
+});
+
+promptPopup.addEventListener('click', (e) => {
+    if (e.target === promptPopup) {
+        promptPopup.classList.remove('show');
+    }
+});
+
 // Fetch Tweets Function
 const fetchTweets = async (username) => {
     const url = 'https://twitter154.p.rapidapi.com/user/tweets';
@@ -203,10 +215,10 @@ const generateImagePrompt = async (initialPrompt) => {
             'Authorization': `Bearer ${openaiApiKey}`
         },
         body: JSON.stringify({
-            model: "gpt-4",
+            model: "gpt-4o",
             messages: [{
                 role: "system",
-                content: "You are an expert at creating detailed, vivid image generation prompts. Your task is to take the provided context and create a specific, detailed prompt that will result in a high-quality, cohesive image that captures the essence of the person and their activities. Your prompt must be under 4,000 characters to work with DALL-E 3."
+                content: "Your task is to take the provided context and create a specific, detailed prompt that will result in a high-quality, cohesive image that captures the essence of the person and their activities. Your prompt must be under 4,000 characters to work with DALL-E 3."
             }, {
                 role: "user",
                 content: initialPrompt
@@ -284,9 +296,18 @@ const showMessage = (container, message, type = 'error') => {
     container.innerHTML = `<div class="${type}">${message}</div>`;
 };
 
-// Display Image
-const displayImage = (imageUrl) => {
-    imageContainer.innerHTML = `<img src="${imageUrl}" alt="Generated visualization">`;
+// Display Image with Prompt
+const displayImage = (imageUrl, prompt) => {
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = "Generated visualization";
+    img.addEventListener('click', () => {
+        promptText.textContent = prompt;
+        promptPopup.classList.add('show');
+    });
+    
+    imageContainer.innerHTML = '';
+    imageContainer.appendChild(img);
 };
 
 // Display Tweets
@@ -375,7 +396,7 @@ generateImageBtn.addEventListener('click', async () => {
         // Generate the final image using the refined prompt
         showLoading(imageContainer, 'Generating final image...');
         const imageUrl = await generateImage(refinedPrompt);
-        displayImage(imageUrl);
+        displayImage(imageUrl, refinedPrompt);
     } catch (error) {
         showMessage(imageContainer, `Error: ${error.message}`);
     }

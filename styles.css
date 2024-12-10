@@ -218,12 +218,72 @@ button:hover {
 .image-container {
     margin: 2rem 0;
     text-align: center;
+    cursor: pointer;
 }
 
 .image-container img {
     max-width: 100%;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.prompt-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 2rem;
+}
+
+.prompt-popup.show {
+    display: flex;
+}
+
+.prompt-content {
+    background-color: #192734;
+    padding: 2rem;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.prompt-content h3 {
+    margin-bottom: 1rem;
+    color: #1da1f2;
+}
+
+.prompt-text {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+.close-prompt {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #8899a6;
+    font-size: 1.5rem;
+    cursor: pointer;
+    width: auto;
+    padding: 0.5rem;
+}
+
+.close-prompt:hover {
+    color: #ffffff;
+    background: none;
 }
 
 .tweets-container {
