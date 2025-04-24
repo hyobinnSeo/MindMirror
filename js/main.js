@@ -160,6 +160,26 @@ async function loadTweetsAutomatically() {
             // Stopped because no tweets were found at all (message handled in loop)
         }
         // The case where allTweets.length >= 100 AND !nextCursor is covered by the third condition
+
+        // --- Cache Saving Logic ---
+        if (allTweets.length > 0) { // Only save if we actually got tweets
+             const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+             const cacheKey = `mindMirrorCache_${currentUsername}`;
+             const dataToCache = {
+                 date: today,
+                 tweets: allTweets
+                 // cursor: nextCursor // Optionally cache the cursor too
+             };
+             try {
+                 localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
+                 console.log(`성공적으로 @${currentUsername}의 트윗 ${allTweets.length}개를 캐시에 저장했습니다.`);
+             } catch (error) {
+                 console.error("캐시 저장 오류:", error);
+                 // Inform user? Maybe not necessary, just log it.
+             }
+        }
+        // --- End Cache Saving ---
+
     } else {
         // Error occurred during auto-load
     }
@@ -180,7 +200,68 @@ fetchTweetsBtn.addEventListener('click', async () => {
          return;
      }
 
-    // Reset state for new user fetch
+    // --- Cache Check Logic ---
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const cacheKey = `mindMirrorCache_${username}`;
+    try {
+        const cachedDataString = localStorage.getItem(cacheKey);
+        if (cachedDataString) {
+            const cachedData = JSON.parse(cachedDataString);
+            if (cachedData.date === today && cachedData.tweets) {
+                // --- Use Custom Popup instead of confirm() ---
+                try {
+                    // Show the custom popup and wait for user choice
+                    await showCacheConfirmPopup(username); 
+                    // If promise resolves (user clicked '기록 사용'):
+                    // Reset state partially but use cached tweets
+                    allTweets = cachedData.tweets;
+                    nextCursor = null; // Simple reset for now
+                    isLoading = false;
+                    currentUsername = username;
+                    tweetsContainer.innerHTML = ''; // Clear previous tweets
+                    imageContainer.innerHTML = ''; // Clear previous image
+                    clearMessages(tweetsContainer); // Clear any previous messages
+
+                    // Display cached tweets
+                    displayTweets(allTweets);
+
+                    // Show completion message
+                    showMessage(tweetsContainer, `캐시에서 ${allTweets.length}개의 트윗을 로드했습니다.`, 'info');
+                    isAutoLoadProcessComplete = true; // Mark as complete
+                    return; // Skip API fetch
+                } catch (error) {
+                    // If promise rejects (user clicked '새로 불러오기' or dismissed):
+                    if (error === 'dismiss') {
+                        // User clicked outside or closed the popup without choosing
+                        console.log("사용자가 팝업을 닫았습니다. 작업을 취소합니다.");
+                        // Do nothing else, effectively cancelling the fetch operation
+                        return; // Exit the handler
+                    } else if (error === 'fetchNew') {
+                        // User clicked '새로 불러오기'
+                        localStorage.removeItem(cacheKey); // Remove outdated cache
+                        console.log("사용자가 새로 불러오기를 선택했습니다. 캐시를 삭제하고 새로 가져옵니다.");
+                        // Proceed to fetch fresh data (code execution continues below)
+                    } else {
+                        // Handle other unexpected errors from showCacheConfirmPopup if any
+                         console.error("캐시 확인 팝업 처리 중 예상치 못한 오류:", error);
+                         // Optionally, proceed to fetch new data or show an error message
+                         localStorage.removeItem(cacheKey); // Safely remove cache just in case
+                    }
+                }
+                // --- End Custom Popup Logic ---
+            } else {
+                // Cache exists but is outdated, remove it before fetching new
+                localStorage.removeItem(cacheKey);
+            }
+        }
+    } catch (error) {
+        console.error("캐시 로드/처리 중 오류:", error);
+        // Proceed to fetch fresh data if cache loading fails
+    }
+    // --- End Cache Check ---
+
+
+    // Reset state for new user fetch (if not loaded from cache)
     allTweets = [];
     nextCursor = null; // Reset cursor for the first load
     isLoading = false;

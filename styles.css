@@ -409,3 +409,38 @@ button:hover {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* Cache Confirm Modal Specific Styles */
+#cache-confirm-modal .modal-content p#cache-confirm-message {
+    margin-bottom: 1.5rem; /* Add space below the message text */
+    text-align: center; /* Center the text */
+}
+
+#cache-confirm-modal .modal-buttons {
+    justify-content: center; /* Center buttons if they don't fill width */
+}
+
+#cache-confirm-modal .modal-buttons button {
+    flex: 0 1 auto; /* Allow button to size based on content, don't grow */
+    width: auto;      /* Let padding and content determine width */
+    min-width: 120px; /* Ensure a minimum reasonable width */
+    padding: 0.8rem 1.5rem; /* Adjust padding as needed */
+}
+
+/* Keep 'Use Cache' button blue (primary action) */
+#use-cache-btn {
+    background-color: #1da1f2;
+}
+#use-cache-btn:hover {
+    background-color: #1991db;
+}
+
+/* Make 'Fetch New' button gray (secondary action) */
+#fetch-new-btn {
+    background-color: #6c757d; /* Gray color */
+    border: 1px solid #8899a6; /* Optional: add a subtle border */
+}
+
+#fetch-new-btn:hover {
+    background-color: #5a6268;
+}

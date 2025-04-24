@@ -22,6 +22,13 @@ const promptPopup = document.getElementById('prompt-popup');
 const promptText = document.querySelector('.prompt-text');
 const closePromptBtn = document.querySelector('.close-prompt');
 
+// --- Cache Confirm Modal Elements ---
+const cacheConfirmModal = document.getElementById('cache-confirm-modal');
+const cacheConfirmMessage = document.getElementById('cache-confirm-message');
+const useCacheBtn = document.getElementById('use-cache-btn');
+const fetchNewBtn = document.getElementById('fetch-new-btn');
+// const closeCacheModalBtn = document.getElementById('close-cache-modal'); // If you add a close button
+
 // Display Loading State
 const showLoading = (container, message) => {
     container.innerHTML = `
@@ -108,6 +115,80 @@ const displayTweets = (tweets) => {
 };
 
 // --- Modal and Popup Handlers (Moved from main script) ---
+
+// --- Cache Confirm Modal Handler ---
+let cacheConfirmResolve = null;
+let cacheConfirmReject = null;
+
+// Function to show the cache confirmation modal
+function showCacheConfirmPopup(username) {
+    return new Promise((resolve, reject) => {
+        cacheConfirmResolve = resolve;
+        cacheConfirmReject = reject;
+
+        cacheConfirmMessage.textContent = `오늘 @${username} 님의 트윗을 가져온 기록이 있습니다. 어떻게 하시겠습니까?`;
+
+        // Ensure listeners are clean before adding new ones
+        useCacheBtn.removeEventListener('click', handleUseCacheClick);
+        fetchNewBtn.removeEventListener('click', handleFetchNewClick);
+        // If using a close button or clicking outside:
+        // closeCacheModalBtn?.removeEventListener('click', handleFetchNewClick);
+        cacheConfirmModal.removeEventListener('click', handleOutsideClick); // Remove listener for outside click
+
+        // Add listeners
+        useCacheBtn.addEventListener('click', handleUseCacheClick);
+        fetchNewBtn.addEventListener('click', handleFetchNewClick);
+        // If using a close button or clicking outside:
+        // closeCacheModalBtn?.addEventListener('click', handleFetchNewClick); // Treat close as fetch new
+        cacheConfirmModal.addEventListener('click', handleOutsideClick); // Add listener for outside click
+
+        cacheConfirmModal.classList.add('show');
+    });
+}
+
+// Helper to hide the modal and clean up listeners
+function hideCacheConfirmPopup() {
+    cacheConfirmModal.classList.remove('show');
+    useCacheBtn.removeEventListener('click', handleUseCacheClick);
+    fetchNewBtn.removeEventListener('click', handleFetchNewClick);
+    // closeCacheModalBtn?.removeEventListener('click', handleFetchNewClick);
+    cacheConfirmModal.removeEventListener('click', handleOutsideClick); // Remove listener for outside click
+    cacheConfirmResolve = null; // Clear stored promise functions
+    cacheConfirmReject = null;
+}
+
+// Handlers for the modal buttons
+function handleUseCacheClick() {
+    if (cacheConfirmResolve) {
+        cacheConfirmResolve(); // Resolve the promise (indicates use cache)
+    }
+    hideCacheConfirmPopup();
+}
+
+function handleFetchNewClick() {
+    if (cacheConfirmReject) {
+        cacheConfirmReject('fetchNew'); // Reject the promise with 'fetchNew' status
+    }
+    hideCacheConfirmPopup();
+}
+
+// Handler for dismissing (e.g., clicking outside)
+function handleDismissClick() {
+    if (cacheConfirmReject) {
+        cacheConfirmReject('dismiss'); // Reject the promise with 'dismiss' status
+    }
+    hideCacheConfirmPopup();
+}
+
+// Optional: Handler for clicking outside the modal content
+// /* -> Remove comment start
+function handleOutsideClick(e) {
+    // Check if the click target is the modal overlay itself
+    if (e.target === cacheConfirmModal) {
+        handleDismissClick(); // Treat clicking outside as dismiss
+    }
+}
+// */ -> Remove comment end
 
 // Initialize UI based on settings (needs settings values from main.js or localStorage)
 function initializeUIElements(twApiKey, oaApiKey, gaApiKey, selStyle) {
