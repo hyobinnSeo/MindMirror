@@ -8,6 +8,7 @@ const settingsBtn = document.getElementById('settings-btn');
 const settingsModal = document.getElementById('settings-modal');
 const twitterApiKeyInput = document.getElementById('twitter-api-key');
 const openaiApiKeyInput = document.getElementById('openai-api-key');
+const googleApiKeyInput = document.getElementById('google-api-key');
 const imageStyleSelect = document.getElementById('image-style');
 const settingsStyleSelect = document.getElementById('settings-style-select');
 const stylePromptInput = document.getElementById('style-prompt');
@@ -24,6 +25,7 @@ const closePromptBtn = document.querySelector('.close-prompt');
 // Constants
 const TWITTER_API_KEY_STORAGE_KEY = 'twitter_api_key';
 const OPENAI_API_KEY_STORAGE_KEY = 'openai_api_key';
+const GOOGLE_AI_API_KEY_STORAGE_KEY = 'google_ai_api_key';
 const IMAGE_STYLE_STORAGE_KEY = 'image_style';
 const STYLE_PROMPTS_STORAGE_KEY = 'style_prompts';
 const MAX_PROMPT_LENGTH = 4000;
@@ -84,11 +86,13 @@ const DEFAULT_PROMPT = `
 // Load settings from localStorage
 let twitterApiKey = localStorage.getItem(TWITTER_API_KEY_STORAGE_KEY) || '';
 let openaiApiKey = localStorage.getItem(OPENAI_API_KEY_STORAGE_KEY) || '';
+let googleApiKey = localStorage.getItem(GOOGLE_AI_API_KEY_STORAGE_KEY) || '';
 let selectedStyle = localStorage.getItem(IMAGE_STYLE_STORAGE_KEY) || 'cinematic';
 
 // Initialize form values
 if (twitterApiKey) twitterApiKeyInput.value = twitterApiKey;
 if (openaiApiKey) openaiApiKeyInput.value = openaiApiKey;
+if (googleApiKey) googleApiKeyInput.value = googleApiKey;
 if (selectedStyle) {
     imageStyleSelect.value = selectedStyle;
     settingsStyleSelect.value = selectedStyle;
@@ -127,10 +131,12 @@ resetPromptBtn.addEventListener('click', () => {
 saveSettingsBtn.addEventListener('click', () => {
     twitterApiKey = twitterApiKeyInput.value.trim();
     openaiApiKey = openaiApiKeyInput.value.trim();
+    googleApiKey = googleApiKeyInput.value.trim();
     
     // Save API keys
     localStorage.setItem(TWITTER_API_KEY_STORAGE_KEY, twitterApiKey);
     localStorage.setItem(OPENAI_API_KEY_STORAGE_KEY, openaiApiKey);
+    localStorage.setItem(GOOGLE_AI_API_KEY_STORAGE_KEY, googleApiKey);
     
     // Save style prompt
     const currentStyle = settingsStyleSelect.value;
@@ -258,10 +264,14 @@ const fetchTweets = async (username, cursor = null) => {
     }
 };
 
-// Get Important Moment from GPT-4
+// Get Important Moment from Google AI (Gemini)
 const getImportantMoment = async (tweets) => {
+    if (!googleApiKey) {
+        throw new Error('Google AI API 키가 설정되지 않았습니다. 설정에서 키를 입력하세요.');
+    }
+
     const tweetTexts = tweets.map(tweet => tweet.text).join('\n');
-    
+
     // Remove URLs, mentions, and hashtags
     const cleanText = tweetTexts
         .replace(/https?:\/\/\S+/g, '')
@@ -269,18 +279,11 @@ const getImportantMoment = async (tweets) => {
         .replace(/#\w+/g, '')
         .trim();
 
-    const url = 'https://api.openai.com/v1/chat/completions';
-    const options = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openaiApiKey}`
-        },
-        body: JSON.stringify({
-            model: "gpt-4o",
-            messages: [{
-                role: "system",
-                content: `
+    // Gemini API endpoint (Attempting to use the specific preview model)
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-preview-03-25:generateContent?key=${googleApiKey}`;
+
+    // Combine system prompt and user text for Gemini
+    const promptTextContent = `
 당신은 한 캐릭터의 관찰자이며 이 캐릭터의 일상을 그리는 일러스트레이터에게 전달할 장면 지침을 완성해야합니다. 아래의 지시에 따라 캐릭터가 하루 동안 떠올린 생각을 검토하고 하루 중 가장 중요한 순간을 포착한 시각적 장면의 지침을 완성하세요.
 
 [구현 팁]
@@ -294,30 +297,63 @@ const getImportantMoment = async (tweets) => {
 
 [출력 형식]
 물리적 위치: (실내/실외 또는 특정 장소 설정)
-시간, 날씨 및 조명 조건: (아침, 낮, 저녁, 밤 등, 날씨나 조명은 필요할 경우) 
+시간, 날씨 및 조명 조건: (아침, 낮, 저녁, 밤 등, 날씨나 조명은 필요할 경우)
 인물의 물리적 행동: (캐릭터가 육체적으로 무엇을 하고 있는지 설명)
 장면 속 주요 사물 또는 소품: (장면과 관련된 3-4가지 항목 나열)
 관련 배경 요소: (장면과 관련된 추가 요소 나열)
 
 아래는 오늘 사용자가 한 생각입니다:
-                ` // 한국어 시스템 메시지로 변경
-            }, {
-                role: "user",
-                content: cleanText
-            }]
+${cleanText}
+    `;
+
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            contents: [{
+                parts: [{
+                    text: promptTextContent
+                }]
+            }],
+            // Optional: Add generation config if needed
+            // generationConfig: {
+            //     "temperature": 0.7,
+            //     "topP": 1.0,
+            //     "topK": 40
+            // }
         })
     };
 
     try {
         const response = await fetch(url, options);
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error?.message || '트윗 분석 실패'); // 한국어 오류 메시지로 변경
+            let errorMsg = '트윗 분석 실패 (Google AI)'; // 오류 메시지 업데이트
+            try {
+                const errorData = await response.json();
+                // Google AI API 오류 구조에 따라 메시지 추출 시도
+                errorMsg = errorData?.error?.message || `HTTP 오류 ${response.status}`;
+            } catch (e) {
+                 errorMsg = `HTTP 오류 ${response.status}: ${response.statusText}`;
+            }
+            throw new Error(errorMsg);
         }
         const result = await response.json();
-        return result.choices[0].message.content;
+
+        // Extract text from the first candidate's content parts
+        if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+            return result.candidates[0].content.parts[0].text;
+        } else {
+             // Handle cases where the expected response structure is missing
+             console.error("Google AI 응답 구조 예상과 다름:", result); // 한국어 콘솔 메시지로 변경
+             throw new Error('Google AI로부터 유효한 응답을 받지 못했습니다.'); // 한국어 오류 메시지로 변경
+        }
     } catch (error) {
-        throw error;
+        console.error("Google AI 호출 오류:", error); // 한국어 콘솔 메시지로 변경
+        throw error; // Re-throw the error
     }
 };
 
@@ -359,8 +395,11 @@ const createPrompt = (importantMoment) => {
         .replace('{additional_prompt}', additionalPromptInput.value.trim() || '없음'); // 'None'을 '없음'으로 변경
 };
 
-// Generate Image from OpenAI
+// Generate Image from OpenAI (DALL-E) - 이 함수는 OpenAI API 키를 계속 사용
 const generateImage = async (prompt) => {
+     if (!openaiApiKey) { // DALL-E 키 확인
+         throw new Error('OpenAI API 키(DALL-E용)가 설정되지 않았습니다. 설정에서 키를 입력하세요.');
+     }
     // Validate DALL-E prompt length
     if (prompt.length > MAX_PROMPT_LENGTH) {
         throw new Error(`프롬프트가 DALL-E의 ${MAX_PROMPT_LENGTH}자 제한을 초과합니다`); // 한국어 오류 메시지로 변경
@@ -616,29 +655,26 @@ generateImageBtn.addEventListener('click', async () => {
         return;
     }
 
-    const ageRange = ageRangeSelect.value;
-    const gender = genderSelect.value;
-
-    if (!ageRange || !gender) {
-        showMessage(imageContainer, '나이대와 성별을 모두 선택하세요'); // 한국어 메시지로 변경
+    // Check for both API Keys needed
+    if (!googleApiKey) { // Gemini 키 확인
+        showMessage(imageContainer, 'Google AI API 키가 설정되지 않았습니다. 아래 ⚙️ 설정 버튼을 클릭하여 API 키를 추가하세요.'); // 한국어 메시지로 변경
+        return;
+    }
+    if (!openaiApiKey) { // DALL-E 키 확인
+        showMessage(imageContainer, 'OpenAI API 키(DALL-E용)가 설정되지 않았습니다. 아래 ⚙️ 설정 버튼을 클릭하여 API 키를 추가하세요.'); // 한국어 메시지로 변경
         return;
     }
 
-    if (!openaiApiKey) {
-        showMessage(imageContainer, 'OpenAI API 키가 설정되지 않았습니다. 아래 ⚙️ 설정 버튼을 클릭하여 API 키를 추가하세요.'); // 한국어 메시지로 변경
-        return;
-    }
-
-    showLoading(imageContainer, '트윗 분석 중...'); // 한국어 메시지로 변경
+    showLoading(imageContainer, '트윗 분석 중 (Gemini)...'); // 모델 이름 명시
 
     try {
-        // Pass the allTweets array directly
+        // Pass the allTweets array directly to Gemini
         const importantMoment = await getImportantMoment(allTweets);
-        
+
         // Create the prompt with the important moment
-        showLoading(imageContainer, '이미지 생성 중...'); // 한국어 메시지로 변경
+        showLoading(imageContainer, '이미지 생성 중 (DALL-E)...'); // 모델 이름 명시
         const prompt = createPrompt(importantMoment);
-        
+
         // Generate the image using DALL-E 3
         const imageUrl = await generateImage(prompt);
         displayImage(imageUrl, prompt);
@@ -648,9 +684,10 @@ generateImageBtn.addEventListener('click', async () => {
 });
 
 // Initial check if keys are missing and modal should be shown
-if (!twitterApiKey || !openaiApiKey) {
+// Check for Twitter, Google AI (for analysis), and OpenAI (for DALL-E) keys
+if (!twitterApiKey || !googleApiKey || !openaiApiKey) {
      settingsModal.classList.add('show');
-     showMessage(tweetsContainer, '환영합니다! 설정(⚙️)에서 API 키를 입력해 주세요.', 'info'); // 한국어 메시지로 변경
+     showMessage(tweetsContainer, '환영합니다! 설정(⚙️)에서 필요한 API 키(RapidAPI, Google AI, OpenAI)를 모두 입력해 주세요.', 'info'); // 안내 메시지 업데이트
 }
 
 // Handle Enter key press for tweet fetching
