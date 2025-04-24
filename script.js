@@ -61,6 +61,7 @@ let allTweets = [];
 let nextCursor = null;
 let isLoading = false; // To prevent multiple fetches at the same time
 let currentUsername = ''; // To keep track of the current user being fetched
+let isAutoLoadProcessComplete = false; // Track completion of the auto-load phase
 
 // Load style prompts from localStorage or use defaults
 let STYLE_PROMPTS = JSON.parse(localStorage.getItem(STYLE_PROMPTS_STORAGE_KEY)) || DEFAULT_STYLE_PROMPTS;
@@ -537,6 +538,9 @@ async function loadTweetsAutomatically() {
     } else {
         // Error occurred during auto-load
     }
+    
+    // Set the flag indicating the auto-load process is complete
+    isAutoLoadProcessComplete = true; 
 }
 
 // Fetch Tweets Button Handler - Initiates automatic loading
@@ -560,19 +564,25 @@ fetchTweetsBtn.addEventListener('click', async () => {
     imageContainer.innerHTML = ''; // Clear previous image
     clearMessages(tweetsContainer); // Clear any previous messages
 
+    // Reset completion flag for new fetch
+    isAutoLoadProcessComplete = false; 
+
     // Start the automatic loading process
     loadTweetsAutomatically(); 
 });
 
 // Generate Image Button Handler
 generateImageBtn.addEventListener('click', async () => {
-    const tweets = Array.from(tweetsContainer.querySelectorAll('.tweet'))
-        .map(tweet => ({
-            text: tweet.querySelector('.tweet-text').textContent
-        }));
+    // First, check if the automatic loading process has completed
+    if (!isAutoLoadProcessComplete) {
+        showMessage(imageContainer, 'Please wait for automatic tweet loading to complete.');
+        return;
+    }
 
-    if (tweets.length === 0) {
-        showMessage(imageContainer, 'Please fetch tweets first');
+    // Then, check if any tweets were actually loaded
+    if (allTweets.length === 0) {
+        // Modify the message slightly for clarity after auto-load attempt
+        showMessage(imageContainer, 'No tweets were loaded. Cannot generate image.');
         return;
     }
 
@@ -592,8 +602,8 @@ generateImageBtn.addEventListener('click', async () => {
     showLoading(imageContainer, 'Analyzing tweets...');
 
     try {
-        // First, get the most important moment from the tweets
-        const importantMoment = await getImportantMoment(tweets);
+        // Pass the allTweets array directly
+        const importantMoment = await getImportantMoment(allTweets);
         
         // Create the prompt with the important moment
         showLoading(imageContainer, 'Creating image...');
