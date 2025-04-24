@@ -28,31 +28,31 @@ const IMAGE_STYLE_STORAGE_KEY = 'image_style';
 const STYLE_PROMPTS_STORAGE_KEY = 'style_prompts';
 const MAX_PROMPT_LENGTH = 4000;
 
-// Default Image Style Prompts
+// Default Image Style Prompts (한국어)
 const DEFAULT_STYLE_PROMPTS = {
     cinematic: {
-        name: "Cinematic Realism",
-        guide: "Craft the scene in a realism style, blending lifelike detail with a modern cinematic touch. Use muted tones, soft textures, and a moody, atmospheric environment to evoke emotion. Highlight the interplay of light and shadow to enhance the narrative depth and immerse the viewer in the moment."
+        name: "시네마틱 리얼리즘",
+        guide: "생생한 디테일과 현대적인 터치를 혼합하여 사실주의 스타일로 장면을 만듭니다. 차분한 톤, 부드러운 질감, 분위기 있는 환경을 사용하여 캐릭터의 일상 생활을 시네마틱하게 보여줍니다."
     },
     renaissance: {
-        name: "Renaissance Oil Painting",
-        guide: "Create the scene in the style of a Renaissance oil painting, with rich colors, dramatic lighting, and classical composition techniques. Focus on capturing the character's essence through traditional portraiture methods."
+        name: "르네상스 유화",
+        guide: "풍부한 색상, 고전적인 구도 기법을 사용하여 르네상스 유화 스타일로 장면을 만듭니다. 전통적인 초상화 기법을 통해 캐릭터의 일상 생활을 보여줍니다."
     },
     photography: {
-        name: "19th Century Photography",
-        guide: "Render the scene as if captured through a vintage camera lens, with characteristic black and white tones. Emphasize authentic composition and lighting typical of early photography while showcasing the character's daily life."
+        name: "19세기 사진",
+        guide: "특징적인 흑백 톤의 빈티지 카메라 렌즈를 통해 포착된 것처럼 장면을 렌더링합니다. 초기 사진의 전형적인 구도를 강조하면서 캐릭터의 일상 생활을 보여줍니다."
     },
     poster: {
-        name: "TV Series Poster",
-        guide: "Compose the scene with the sophisticated and contemporary style of streaming platform marketing, featuring high-contrast imagery, and modern digital effects. Focus on creating an atmospheric mood that reflects current entertainment visual trends."
+        name: "TV 시리즈 포스터",
+        guide: "현대적인 효과를 특징으로 하는 스트리밍 플랫폼 마케팅의 세련되고 현대적인 TV 시리즈 포스터 스타일로 장면을 구성합니다. 현재 엔터테인먼트 시각 트렌드를 반영하는 분위기를 만들어 캐릭터의 일상 생활을 보여줍니다."
     },
     anime: {
-        name: "Anime Style",
-        guide: "Create the scene in a anime art style, with expressive features, and characteristic visual elements of the medium. Focus on slice-of-life moments that capture the character's daily activities in an authentic way."
+        name: "애니메이션 스타일",
+        guide: "풍부한 표현과 시각적 요소를 사용하여 일본 애니메이션 아트 스타일로 장면을 만들어 캐릭터의 일상 생활을 보여줍니다."
     },
     animation_3D: {
-        name: "3D Animation",
-        guide: "Create the scene in the style of modern Disney/DreamWorks 3D animation. Use highly polished 3D rendering with exaggerated yet believable proportions.The character should have highly expressive features with slightly enlarged eyes and enhanced emotional range typical of Disney/DreamWorks characters."
+        name: "3D 애니메이션",
+        guide: "현대 디즈니/드림웍스 3D 애니메이션 스타일로 장면을 만들어 캐릭터의 일상 생활을 보여줍니다. 캐릭터는 약간 확대된 눈과 디즈니/드림웍스 캐릭터의 전형적인 특징을 가져야 합니다."
     }
 };
 
@@ -66,20 +66,20 @@ let isAutoLoadProcessComplete = false; // Track completion of the auto-load phas
 // Load style prompts from localStorage or use defaults
 let STYLE_PROMPTS = JSON.parse(localStorage.getItem(STYLE_PROMPTS_STORAGE_KEY)) || DEFAULT_STYLE_PROMPTS;
 
-// Default DALL-E prompt template
+// Default DALL-E prompt template (한국어)
 const DEFAULT_PROMPT = `
-Generate an image depicting a single character's daily life.
+아래의 정보에 기반하여 캐릭터의 일상 생활을 묘사하는 이미지를 생성합니다.
 
-Character details:
-Gender: {gender}
-Age: {age}
+캐릭터 세부 정보:
+성별: {gender}
+나이: {age}
 
-Style Guidelines:
-Style: {style_name}
-Guide: {style_guide}
-The important moment from the character's day: {important_moment}
+스타일 가이드라인:
+스타일: {style_name}
+가이드: {style_guide}
+캐릭터 하루 중 중요한 순간: {important_moment}
 
-Additional Requirements: {additional_prompt}`;
+추가 요구 사항: {additional_prompt}`;
 
 // Load settings from localStorage
 let twitterApiKey = localStorage.getItem(TWITTER_API_KEY_STORAGE_KEY) || '';
@@ -139,8 +139,8 @@ saveSettingsBtn.addEventListener('click', () => {
     
     settingsModal.classList.remove('show');
     
-    // Show success message in tweets container
-    showMessage(tweetsContainer, 'Settings saved successfully! You can now fetch tweets and generate images.', 'success');
+    // Show success message in tweets container (한국어)
+    showMessage(tweetsContainer, '설정이 성공적으로 저장되었습니다!', 'success');
 });
 
 // Close modal when clicking outside
@@ -181,13 +181,13 @@ const fetchTweets = async (username, cursor = null) => {
     try {
         const response = await fetch(url, options);
         if (!response.ok) {
-            let errorMsg = 'Failed to fetch tweets';
+            let errorMsg = '트윗을 가져오지 못했습니다'; // 한국어 메시지로 변경
             try {
                 const errorData = await response.json();
-                errorMsg = errorData.message || `Error ${response.status}`;
+                errorMsg = errorData.message || `오류 ${response.status}`;
             } catch (e) {
                 // Ignore if response is not JSON
-                 errorMsg = `Error ${response.status}: ${response.statusText}`;
+                 errorMsg = `오류 ${response.status}: ${response.statusText}`;
             }
              throw new Error(errorMsg);
         }
@@ -251,9 +251,9 @@ const fetchTweets = async (username, cursor = null) => {
 
         return { results: tweets, cursor: bottomCursorValue };
     } catch (error) {
-        // Error is handled within fetchTweets (console log), show message here
-        showMessage(tweetsContainer, `Failed to load tweets: ${error.message}`, 'error');
-        console.error("Error fetching tweets:", error);
+        // Error is handled within fetchTweets (console log), show message here (한국어)
+        showMessage(tweetsContainer, `트윗 로드 실패: ${error.message}`, 'error');
+        console.error("트윗 가져오기 오류:", error); // 한국어 콘솔 메시지로 변경
         throw error; // Re-throw the error
     }
 };
@@ -281,28 +281,26 @@ const getImportantMoment = async (tweets) => {
             messages: [{
                 role: "system",
                 content: `
-                Review a user's thoughts from a single day and create a specific visual scene of the most meaningful moment. Structure your response as follows:
+당신은 한 캐릭터의 관찰자이며 이 캐릭터의 일상을 그리는 일러스트레이터에게 전달할 장면 지침을 완성해야합니다. 아래의 지시에 따라 캐릭터가 하루 동안 떠올린 생각을 검토하고 하루 중 가장 중요한 순간을 포착한 시각적 장면의 지침을 완성하세요.
 
-Physical location: (indoor/outdoor, specific setting)
-Time of day and lighting conditions:
-Weather: (if applicable)
-Character's physical actions: (Describe what the person is physically doing)
-Key objects or props in the scene: (List 3-4 relevant items in the scene)
-Any relevant background elements
+[구현 팁]
+1. 일러스트레이터가 장면을 그릴 수 있도록 시각적이고 구체적인 정보에 집중하세요. 추상적인 개념이나 내적 독백 또는 철학적 성찰을 피하세요.
+2. 시각화할 수 있는 정확한 물리적 세부 정보를 포함하세요.
+3. 장면을 구체적인 구성 요소(위치, 조명, 행동, 물체)로 분해하세요.
+4. 내적 감정보다는 관찰 가능한 상태에 집중하세요.
+5. 배경적 정보를 사용하여 추상적이지 않게 분위기를 설정하세요.
+6. 장면에 특징을 더할 수 있는 특정 물체 및 소품 등을 작성하세요.
+7. 일러스트레이터가 한 특정 장면의 스냅샷을 그릴 수 있도록 장면 지침을 단일 사진 또는 그림으로 캡처할 수 있는 설명으로 작성하세요.
 
-Describe this scene in a single paragraph focusing ONLY on visible, concrete details. Avoid mentioning thoughts, feelings, or abstract concepts.
+[출력 형식]
+물리적 위치: (실내/실외 또는 특정 장소 설정)
+시간, 날씨 및 조명 조건: (아침, 낮, 저녁, 밤 등, 날씨나 조명은 필요할 경우) 
+인물의 물리적 행동: (캐릭터가 육체적으로 무엇을 하고 있는지 설명)
+장면 속 주요 사물 또는 소품: (장면과 관련된 3-4가지 항목 나열)
+관련 배경 요소: (장면과 관련된 추가 요소 나열)
 
-### Implementation Tips:
-1. Include specific instruction to avoid abstract concepts, internal monologues, or philosophical reflections
-2. Request exact physical details that can be visualized
-3. Break down the scene into concrete components (location, lighting, actions, objects)
-4. Focus on observable emotional states rather than internal feelings
-5. Use time of day and weather to help set the mood without being abstract
-6. Require specific objects and props that can anchor the scene
-7. Limit the description to what could be captured in a single photograph or painting
-
-Below are the thoughts the user had today:
-                `
+아래는 오늘 사용자가 한 생각입니다:
+                ` // 한국어 시스템 메시지로 변경
             }, {
                 role: "user",
                 content: cleanText
@@ -314,7 +312,7 @@ Below are the thoughts the user had today:
         const response = await fetch(url, options);
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error?.message || 'Failed to analyze tweets');
+            throw new Error(error.error?.message || '트윗 분석 실패'); // 한국어 오류 메시지로 변경
         }
         const result = await response.json();
         return result.choices[0].message.content;
@@ -323,27 +321,49 @@ Below are the thoughts the user had today:
     }
 };
 
+// 한글 값 매핑 객체 추가
+const AGE_MAP_KR = {
+    '10s': '10대',
+    '20s': '20대',
+    '30s': '30대',
+    '40s': '40대',
+    '50s': '50대',
+    '60s_plus': '60대 이상',
+    '': '선택 안함'
+};
+
+const GENDER_MAP_KR = {
+    'female': '여성',
+    'male': '남성',
+    'unspecified': '미기재',
+    '': '선택 안함'
+};
+
 // Create Image Prompt
 const createPrompt = (importantMoment) => {
-    // Get user's age range and gender
-    const ageRange = ageRangeSelect.value;
-    const gender = genderSelect.value;
+    // Get user's age range and gender values
+    const ageValue = ageRangeSelect.value;
+    const genderValue = genderSelect.value;
     const style = STYLE_PROMPTS[selectedStyle];
+
+    // Map values to Korean text
+    const koreanAge = AGE_MAP_KR[ageValue] || ageValue; // 기본값으로 원래 value 사용
+    const koreanGender = GENDER_MAP_KR[genderValue] || genderValue; // 기본값으로 원래 value 사용
 
     return DEFAULT_PROMPT
         .replace('{important_moment}', importantMoment)
-        .replace('{age}', ageRange)
-        .replace('{gender}', gender)
+        .replace('{age}', koreanAge) // 한국어 나이대로 변경
+        .replace('{gender}', koreanGender) // 한국어 성별로 변경
         .replace('{style_name}', style.name)
         .replace('{style_guide}', style.guide)
-        .replace('{additional_prompt}', additionalPromptInput.value.trim() || 'None');
+        .replace('{additional_prompt}', additionalPromptInput.value.trim() || '없음'); // 'None'을 '없음'으로 변경
 };
 
 // Generate Image from OpenAI
 const generateImage = async (prompt) => {
     // Validate DALL-E prompt length
     if (prompt.length > MAX_PROMPT_LENGTH) {
-        throw new Error(`Prompt exceeds DALL-E's ${MAX_PROMPT_LENGTH} character limit`);
+        throw new Error(`프롬프트가 DALL-E의 ${MAX_PROMPT_LENGTH}자 제한을 초과합니다`); // 한국어 오류 메시지로 변경
     }
 
     const url = 'https://api.openai.com/v1/images/generations';
@@ -365,7 +385,7 @@ const generateImage = async (prompt) => {
         const response = await fetch(url, options);
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error?.message || 'Failed to generate image');
+            throw new Error(error.error?.message || '이미지 생성 실패'); // 한국어 오류 메시지로 변경
         }
         const result = await response.json();
         return result.data[0].url;
@@ -412,7 +432,7 @@ const clearMessages = (container, type = null) => {
 const displayImage = (imageUrl, prompt) => {
     const img = document.createElement('img');
     img.src = imageUrl;
-    img.alt = "Generated visualization";
+    img.alt = "생성된 시각화"; // 한국어 alt 텍스트로 변경
     img.addEventListener('click', () => {
         promptText.textContent = prompt;
         promptPopup.classList.add('show');
@@ -465,8 +485,8 @@ async function loadTweetsAutomatically() {
     let autoLoadError = false;
     let apiCallCount = 0; // Counter for API calls
 
-    // Show initial loading message
-    showLoading(tweetsContainer, 'Automatically loading initial tweets...');
+    // Show initial loading message (한국어)
+    showLoading(tweetsContainer, '초기 트윗 자동 로딩 중...');
 
     // Loop while under tweet limit (100), under call limit (5), and potentially more tweets exist
     while (allTweets.length < 100 && apiCallCount < 5) {
@@ -491,7 +511,7 @@ async function loadTweetsAutomatically() {
                 displayTweets(newData.results); 
             } else if (allTweets.length === 0) {
                 clearMessages(tweetsContainer); 
-                showMessage(tweetsContainer, 'No tweets found for this user.', 'info');
+                showMessage(tweetsContainer, '이 사용자에 대한 트윗을 찾을 수 없습니다.', 'info'); // 한국어 메시지로 변경
                 break; 
             }
 
@@ -508,9 +528,9 @@ async function loadTweetsAutomatically() {
             }
 
         } catch (error) {
-            console.error("Error during automatic tweet loading:", error);
+            console.error("자동 트윗 로딩 중 오류:", error); // 한국어 콘솔 메시지로 변경
             clearMessages(tweetsContainer); 
-            showMessage(tweetsContainer, `Error automatically loading tweets: ${error.message}.`, 'error');
+            showMessage(tweetsContainer, `자동 트윗 로딩 오류: ${error.message}.`, 'error'); // 한국어 메시지로 변경
             autoLoadError = true;
             break; 
         } finally {
@@ -529,17 +549,17 @@ async function loadTweetsAutomatically() {
     if (!autoLoadError) {
         if (apiCallCount >= 5 && allTweets.length < 100) {
             // Stopped by call limit BEFORE reaching tweet limit
-            showMessage(tweetsContainer, `Loaded ${allTweets.length} tweets after ${apiCallCount} API calls (call limit reached).`, 'info');
+            showMessage(tweetsContainer, `${apiCallCount}번의 API 호출 후 ${allTweets.length}개의 트윗을 로드했습니다 (호출 제한 도달).`, 'info'); // 한국어 메시지로 변경
         } else if (allTweets.length >= 100 && nextCursor) {
             // Stopped by tweet limit, more were available (cursor exists)
-            showMessage(tweetsContainer, `Automatically loaded ${allTweets.length} tweets (limit reached).`, 'info');
+            showMessage(tweetsContainer, `자동으로 ${allTweets.length}개의 트윗을 로드했습니다 (제한 도달).`, 'info'); // 한국어 메시지로 변경
         } else if (!nextCursor && allTweets.length > 0) {
             // Stopped because no more tweets available (no cursor)
              // Check if we stopped exactly at the call limit without reaching 100 tweets
              if (apiCallCount >= 5 && allTweets.length < 100) {
                  // Message already handled above
              } else {
-                 showMessage(tweetsContainer, `All ${allTweets.length} available tweets loaded.`, 'info');
+                 showMessage(tweetsContainer, `사용 가능한 모든 ${allTweets.length}개의 트윗을 로드했습니다.`, 'info'); // 한국어 메시지로 변경
              }
         } else if (!nextCursor && allTweets.length === 0) {
             // Stopped because no tweets were found at all (message handled in loop)
@@ -557,11 +577,11 @@ async function loadTweetsAutomatically() {
 fetchTweetsBtn.addEventListener('click', async () => {
     const username = twitterHandle.value.trim();
     if (!username) {
-        showMessage(tweetsContainer, 'Please enter a Twitter username.');
+        showMessage(tweetsContainer, '트위터 사용자 이름을 입력하세요.'); // 한국어 메시지로 변경
         return;
     }
      if (!twitterApiKey) {
-         showMessage(tweetsContainer, 'Please enter your RapidAPI key in Settings.');
+         showMessage(tweetsContainer, '설정에서 RapidAPI 키를 입력하세요.'); // 한국어 메시지로 변경
          return;
      }
 
@@ -585,14 +605,14 @@ fetchTweetsBtn.addEventListener('click', async () => {
 generateImageBtn.addEventListener('click', async () => {
     // First, check if the automatic loading process has completed
     if (!isAutoLoadProcessComplete) {
-        showMessage(imageContainer, 'Please wait for automatic tweet loading to complete.');
+        showMessage(imageContainer, '자동 트윗 로딩이 완료될 때까지 기다려 주세요.'); // 한국어 메시지로 변경
         return;
     }
 
     // Then, check if any tweets were actually loaded
     if (allTweets.length === 0) {
         // Modify the message slightly for clarity after auto-load attempt
-        showMessage(imageContainer, 'No tweets were loaded. Cannot generate image.');
+        showMessage(imageContainer, '로드된 트윗이 없습니다. 이미지를 생성할 수 없습니다.'); // 한국어 메시지로 변경
         return;
     }
 
@@ -600,37 +620,37 @@ generateImageBtn.addEventListener('click', async () => {
     const gender = genderSelect.value;
 
     if (!ageRange || !gender) {
-        showMessage(imageContainer, 'Please select both age range and gender');
+        showMessage(imageContainer, '나이대와 성별을 모두 선택하세요'); // 한국어 메시지로 변경
         return;
     }
 
     if (!openaiApiKey) {
-        showMessage(imageContainer, 'OpenAI API key not set. Click the ⚙️ Settings button below to add your API key.');
+        showMessage(imageContainer, 'OpenAI API 키가 설정되지 않았습니다. 아래 ⚙️ 설정 버튼을 클릭하여 API 키를 추가하세요.'); // 한국어 메시지로 변경
         return;
     }
 
-    showLoading(imageContainer, 'Analyzing tweets...');
+    showLoading(imageContainer, '트윗 분석 중...'); // 한국어 메시지로 변경
 
     try {
         // Pass the allTweets array directly
         const importantMoment = await getImportantMoment(allTweets);
         
         // Create the prompt with the important moment
-        showLoading(imageContainer, 'Creating image...');
+        showLoading(imageContainer, '이미지 생성 중...'); // 한국어 메시지로 변경
         const prompt = createPrompt(importantMoment);
         
         // Generate the image using DALL-E 3
         const imageUrl = await generateImage(prompt);
         displayImage(imageUrl, prompt);
     } catch (error) {
-        showMessage(imageContainer, `Error: ${error.message}`);
+        showMessage(imageContainer, `오류: ${error.message}`); // 한국어 메시지로 변경
     }
 });
 
 // Initial check if keys are missing and modal should be shown
 if (!twitterApiKey || !openaiApiKey) {
      settingsModal.classList.add('show');
-     showMessage(tweetsContainer, 'Welcome! Please enter your API keys in the Settings (⚙️).', 'info');
+     showMessage(tweetsContainer, '환영합니다! 설정(⚙️)에서 API 키를 입력해 주세요.', 'info'); // 한국어 메시지로 변경
 }
 
 // Handle Enter key press for tweet fetching

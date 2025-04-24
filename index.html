@@ -1,98 +1,98 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tweet Visualizer</title>
+    <title>Mind Mirror</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Tweet Visualizer</h1>
+        <h1>마인드 미러</h1>
         <div class="input-container">
             <span class="at-symbol">@</span>
-            <input type="text" id="twitter-handle" placeholder="username" autocomplete="off">
+            <input type="text" id="twitter-handle" placeholder="사용자 이름" autocomplete="off">
         </div>
-        <button id="fetch-tweets-btn" class="fetch-tweets-btn">Fetch Tweets</button>
+        <button id="fetch-tweets-btn" class="fetch-tweets-btn">트윗 가져오기</button>
         
         <div class="form-section">
             <div class="input-group">
-                <label for="age-range">Age Range:</label>
+                <label for="age-range">나이대:</label>
                 <select id="age-range">
-                    <option value="">Select age range</option>
-                    <option value="10s">Teens (10-19)</option>
-                    <option value="20s">Twenties (20-29)</option>
-                    <option value="30s">Thirties (30-39)</option>
-                    <option value="40s">Forties (40-49)</option>
-                    <option value="50s">Fifties (50-59)</option>
-                    <option value="60s">Sixties (60-69)</option>
-                    <option value="65+">Seventy and above (70+)</option>
+                    <option value="">나이대를 선택하세요</option>
+                    <option value="10s">10대 (13-19세)</option>
+                    <option value="20s">20대 (20-29세)</option>
+                    <option value="30s">30대 (30-39세)</option>
+                    <option value="40s">40대 (40-49세)</option>
+                    <option value="50s">50대 (50-59세)</option>
+                    <option value="60s_plus">60대 이상</option>
                 </select>
             </div>
             <div class="input-group">
-                <label for="gender">Gender:</label>
+                <label for="gender">성별:</label>
                 <select id="gender">
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
+                    <option value="">성별을 선택하세요</option>
+                    <option value="female">여성</option>
+                    <option value="male">남성</option>
+                    <option value="unspecified">미기재</option>
                 </select>
             </div>
             <div class="input-group">
-                <label for="image-style">Image Style:</label>
+                <label for="image-style">이미지 스타일:</label>
                 <select id="image-style">
-                    <option value="cinematic">Cinematic Realism</option>
-                    <option value="renaissance">Renaissance Oil Painting</option>
-                    <option value="photography">19th Century Photography</option>
-                    <option value="poster">TV Series Poster</option>
-                    <option value="anime">Anime Character</option>
-                    <option value="animation_3D">3D Animation</option>
+                    <option value="cinematic">영화적 리얼리즘</option>
+                    <option value="renaissance">르네상스 유화</option>
+                    <option value="photography">19세기 사진</option>
+                    <option value="poster">TV 시리즈 포스터</option>
+                    <option value="anime">애니메이션 캐릭터</option>
+                    <option value="animation_3D">3D 애니메이션</option>
                 </select>
             </div>
         </div>
 
         <div class="input-group">
-            <label for="additional-prompt">Additional Prompt:</label>
-            <textarea id="additional-prompt" placeholder="Add any additional details or requirements for the image generation"></textarea>
+            <label for="additional-prompt">추가 프롬프트:</label>
+            <textarea id="additional-prompt" placeholder="이미지 생성에 필요한 추가 세부 정보나 요구 사항을 입력하세요"></textarea>
         </div>
 
-        <button id="generate-image-btn">Generate Image</button>
+        <button id="generate-image-btn">이미지 생성하기</button>
         <div id="image-container" class="image-container"></div>
     
         <div id="tweets-container" class="tweets-container"></div>
 
-        <button id="settings-btn" class="settings-btn">⚙️ Settings</button>
+        <button id="settings-btn" class="settings-btn">⚙️ 설정</button>
     </div>
     
     <div id="settings-modal" class="modal">
         <div class="modal-content">
-            <h2>Settings</h2>
+            <h2>설정</h2>
             <div class="input-group">
-                <label for="twitter-api-key">RapidAPI Key:</label>
-                <input type="password" id="twitter-api-key" placeholder="Enter your RapidAPI key">
+                <label for="twitter-api-key">RapidAPI 키:</label>
+                <input type="password" id="twitter-api-key" placeholder="RapidAPI 키를 입력하세요">
             </div>
             <div class="input-group">
-                <label for="openai-api-key">OpenAI API Key:</label>
-                <input type="password" id="openai-api-key" placeholder="Enter your OpenAI API key">
+                <label for="openai-api-key">OpenAI API 키:</label>
+                <input type="password" id="openai-api-key" placeholder="OpenAI API 키를 입력하세요">
             </div>
             <div class="input-group">
-                <label for="settings-style-select">Edit Style Prompt:</label>
+                <label for="settings-style-select">스타일 프롬프트 편집:</label>
                 <select id="settings-style-select">
-                    <option value="cinematic">Cinematic Realism</option>
-                    <option value="renaissance">Renaissance Oil Painting</option>
-                    <option value="photography">19th Century Photography</option>
-                    <option value="poster">TV Series Poster</option>
-                    <option value="anime">Anime Character</option>
-                    <option value="animation_3D">3D Animation</option>
+                    <option value="cinematic">영화적 리얼리즘</option>
+                    <option value="renaissance">르네상스 유화</option>
+                    <option value="photography">19세기 사진</option>
+                    <option value="poster">TV 시리즈 포스터</option>
+                    <option value="anime">애니메이션 캐릭터</option>
+                    <option value="animation_3D">3D 애니메이션</option>
                 </select>
             </div>
             <div class="input-group style-prompt-group">
-                <label for="style-prompt">Style Prompt:</label>
-                <textarea id="style-prompt" placeholder="Enter the prompt for the selected style"></textarea>
-                <button id="reset-prompt" class="reset-btn">Reset Prompt</button>
+                <label for="style-prompt">스타일 프롬프트:</label>
+                <textarea id="style-prompt" placeholder="선택한 스타일에 대한 프롬프트를 입력하세요"></textarea>
+                <button id="reset-prompt" class="reset-btn">프롬프트 초기화</button>
             </div>
             <div class="modal-buttons">
-                <button id="save-settings">Save</button>
-                <button id="close-modal">Cancel</button>
+                <button id="save-settings">저장</button>
+                <button id="close-modal">취소</button>
             </div>
         </div>
     </div>
@@ -100,7 +100,7 @@
     <div id="prompt-popup" class="prompt-popup">
         <div class="prompt-content">
             <button class="close-prompt">×</button>
-            <h3>Generated Prompt</h3>
+            <h3>생성된 프롬프트</h3>
             <div class="prompt-text"></div>
         </div>
     </div>
