@@ -12,8 +12,8 @@
         <div class="input-container">
             <span class="at-symbol">@</span>
             <input type="text" id="twitter-handle" placeholder="username" autocomplete="off">
-            <button id="fetch-tweets-btn" class="fetch-tweets-btn">Fetch Tweets</button>
         </div>
+        <button id="fetch-tweets-btn" class="fetch-tweets-btn">Fetch Tweets</button>
         
         <div class="form-section">
             <div class="input-group">
@@ -85,13 +85,13 @@
                     <option value="animation_3D">3D Animation</option>
                 </select>
             </div>
-            <div class="input-group">
+            <div class="input-group style-prompt-group">
                 <label for="style-prompt">Style Prompt:</label>
                 <textarea id="style-prompt" placeholder="Enter the prompt for the selected style"></textarea>
+                <button id="reset-prompt" class="reset-btn">Reset Prompt</button>
             </div>
             <div class="modal-buttons">
                 <button id="save-settings">Save</button>
-                <button id="reset-prompt" class="reset-btn">Reset Prompt</button>
                 <button id="close-modal">Cancel</button>
             </div>
         </div>

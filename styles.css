@@ -21,7 +21,7 @@ body {
     border-radius: 15px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
     width: 90%;
-    max-width: 600px;
+    max-width: 800px;
 }
 
 h1 {
@@ -33,9 +33,6 @@ h1 {
 .input-container {
     position: relative;
     margin-bottom: 1rem;
-    display: flex;
-    gap: 1rem;
-    align-items: center;
 }
 
 .at-symbol {
@@ -48,19 +45,31 @@ h1 {
 }
 
 #twitter-handle {
-    flex: 1;
+    /* flex: 1; */
 }
 
 .fetch-tweets-btn {
-    width: auto;
-    white-space: nowrap;
+    /* width: auto; */
+    width: 100%;
+    /* white-space: nowrap; */
     padding: 0.8rem 1.2rem;
-    background-color: #253341;
-    border: 2px solid #38444d;
+    /* background-color: #253341; */
+    /* border: 2px solid #38444d; */
+    background-color: #1da1f2;
+    border: none;
+    margin-top: 1rem;
+    /* border-radius: 9999px; */
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .fetch-tweets-btn:hover {
-    background-color: #38444d;
+    /* background-color: #38444d; */
+    background-color: #1991db;
 }
 
 .form-section {
@@ -85,7 +94,8 @@ input, select, textarea {
     padding-left: 2.5rem;
     background-color: #253341;
     border: 2px solid #38444d;
-    border-radius: 9999px;
+    /* border-radius: 9999px; */
+    border-radius: 8px;
     color: #ffffff;
     font-size: 1.1rem;
     transition: border-color 0.3s ease;
@@ -93,7 +103,8 @@ input, select, textarea {
 
 textarea {
     min-height: 100px;
-    border-radius: 12px;
+    /* border-radius: 12px; */
+    border-radius: 8px;
     padding: 1rem;
     resize: vertical;
     font-family: inherit;
@@ -128,7 +139,8 @@ button {
     padding: 0.8rem;
     background-color: #1da1f2;
     border: none;
-    border-radius: 9999px;
+    /* border-radius: 9999px; */
+    border-radius: 8px;
     color: #ffffff;
     font-size: 1.1rem;
     font-weight: bold;
@@ -147,6 +159,9 @@ button:hover {
     border: 2px solid #38444d;
     font-size: 1rem;
     margin-top: 2rem;
+    border-radius: 8px;
+    display: block;
+    margin-left: auto;
 }
 
 .settings-btn:hover {
@@ -174,7 +189,7 @@ button:hover {
     padding: 2rem;
     border-radius: 15px;
     width: 90%;
-    max-width: 400px;
+    max-width: 600px;
     max-height: 90vh;
     overflow-y: auto;
 }
@@ -194,6 +209,12 @@ button:hover {
     color: #8899a6;
 }
 
+.style-prompt-group {
+    /* position: relative; */ /* Use flexbox instead for easier alignment */
+    display: flex;
+    flex-direction: column;
+}
+
 .input-group input, .input-group textarea {
     padding-left: 1rem;
 }
@@ -208,11 +229,26 @@ button:hover {
 }
 
 .reset-btn {
+    /* flex: 1; */ /* Remove flex property */
     background-color: #794bc4;
+    width: auto; /* Adjust width */
+    padding: 0.6rem 1.2rem; /* Adjust padding */
+    margin-top: 0.5rem; /* Add space above */
+    margin-left: auto; /* Align to the right */
+    font-size: 0.9rem; /* Adjust font size if needed */
+    border-radius: 6px; /* Slightly less rounded */
 }
 
 .reset-btn:hover {
     background-color: #6a43b0;
+}
+
+#close-modal { /* Target Cancel button specifically */
+    background-color: #6c757d; /* Change background color */
+}
+
+#close-modal:hover {
+    background-color: #5a6268; /* Darker shade on hover */
 }
 
 .image-container {
