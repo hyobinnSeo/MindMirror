@@ -166,7 +166,7 @@ const fetchTweets = async (username, cursor = null) => {
     // isLoading = true; // Set by caller
     // REMOVE: showLoading(tweetsContainer, 'Fetching tweets...'); // Don't show loading inside container
 
-    let url = `https://twitter-v24.p.rapidapi.com/user/tweets?username=${encodeURIComponent(username)}&limit=40`; // Keep limit reasonable for pagination
+    let url = `https://twitter-v24.p.rapidapi.com/user/tweets?username=${encodeURIComponent(username)}&limit=100`; // Changed limit to 100
     if (cursor) {
         url += `&cursor=${encodeURIComponent(cursor)}`;
     }
@@ -459,17 +459,18 @@ const displayTweets = (tweets) => {
     });
 };
 
-// Function to automatically load tweets up to the limit (30)
+// Function to automatically load tweets up to the limit (100) or max 5 calls
 async function loadTweetsAutomatically() {
     if (!currentUsername) return;
     let autoLoadError = false;
+    let apiCallCount = 0; // Counter for API calls
 
     // Show initial loading message
     showLoading(tweetsContainer, 'Automatically loading initial tweets...');
 
-    // Loop while under the limit and potentially more tweets exist
-    while (allTweets.length < 30) {
-        if (isLoading) { // Safety check
+    // Loop while under tweet limit (100), under call limit (5), and potentially more tweets exist
+    while (allTweets.length < 100 && apiCallCount < 5) {
+        if (isLoading) {
             await new Promise(resolve => setTimeout(resolve, 100));
             continue;
         }
@@ -481,38 +482,37 @@ async function loadTweetsAutomatically() {
         isLoading = true;
 
         try {
+            apiCallCount++; // Increment API call counter
             const cursorToUse = (allTweets.length === 0) ? null : nextCursor;
             const newData = await fetchTweets(currentUsername, cursorToUse);
 
             if (newData.results.length > 0) {
                 allTweets = allTweets.concat(newData.results);
-                displayTweets(newData.results); // Append new tweets
+                displayTweets(newData.results); 
             } else if (allTweets.length === 0) {
-                // First load attempt returned no tweets - clear loading here as the loop will break
-                clearMessages(tweetsContainer); // Clear loading
+                clearMessages(tweetsContainer); 
                 showMessage(tweetsContainer, 'No tweets found for this user.', 'info');
-                break; // Stop loading
+                break; 
             }
-            // If subsequent load returns no tweets, nextCursor check below handles it
 
-            nextCursor = newData.cursor; // Update cursor for the next potential iteration
+            nextCursor = newData.cursor; // Update cursor
 
             // Stop if there's no next cursor
             if (!nextCursor) {
                 break;
             }
 
-            // Small delay only if we are continuing the loop
-            if (allTweets.length < 30) {
-                await new Promise(resolve => setTimeout(resolve, 200)); // 200ms delay between auto-fetches
+            // Small delay only if we are continuing the loop AND haven't hit the call limit yet
+            if (allTweets.length < 100 && apiCallCount < 5) {
+                await new Promise(resolve => setTimeout(resolve, 200));
             }
 
         } catch (error) {
             console.error("Error during automatic tweet loading:", error);
-            clearMessages(tweetsContainer); // Clear loading message on error
+            clearMessages(tweetsContainer); 
             showMessage(tweetsContainer, `Error automatically loading tweets: ${error.message}.`, 'error');
             autoLoadError = true;
-            break; // Stop automatic loading on error
+            break; 
         } finally {
             isLoading = false;
         }
@@ -527,14 +527,24 @@ async function loadTweetsAutomatically() {
     }
 
     if (!autoLoadError) {
-        if (!nextCursor && allTweets.length > 0) {
-            // No more cursors found during auto-load
-            showMessage(tweetsContainer, `All ${allTweets.length} available tweets loaded.`, 'info');
-        } else if (!nextCursor && allTweets.length === 0) {
-             // No tweets found at all (message already shown in loop)
-        } else if (allTweets.length >= 30 && nextCursor) {
+        if (apiCallCount >= 5 && allTweets.length < 100) {
+            // Stopped by call limit BEFORE reaching tweet limit
+            showMessage(tweetsContainer, `Loaded ${allTweets.length} tweets after ${apiCallCount} API calls (call limit reached).`, 'info');
+        } else if (allTweets.length >= 100 && nextCursor) {
+            // Stopped by tweet limit, more were available (cursor exists)
             showMessage(tweetsContainer, `Automatically loaded ${allTweets.length} tweets (limit reached).`, 'info');
+        } else if (!nextCursor && allTweets.length > 0) {
+            // Stopped because no more tweets available (no cursor)
+             // Check if we stopped exactly at the call limit without reaching 100 tweets
+             if (apiCallCount >= 5 && allTweets.length < 100) {
+                 // Message already handled above
+             } else {
+                 showMessage(tweetsContainer, `All ${allTweets.length} available tweets loaded.`, 'info');
+             }
+        } else if (!nextCursor && allTweets.length === 0) {
+            // Stopped because no tweets were found at all (message handled in loop)
         }
+        // The case where allTweets.length >= 100 AND !nextCursor is covered by the third condition
     } else {
         // Error occurred during auto-load
     }
