@@ -20,7 +20,6 @@ const additionalPromptInput = document.getElementById('additional-prompt');
 const promptPopup = document.getElementById('prompt-popup');
 const promptText = document.querySelector('.prompt-text');
 const closePromptBtn = document.querySelector('.close-prompt');
-const loadMoreBtn = document.getElementById('load-more-btn');
 
 // Constants
 const TWITTER_API_KEY_STORAGE_KEY = 'twitter_api_key';
@@ -377,7 +376,7 @@ const generateImage = async (prompt) => {
 // Display Loading State
 const showLoading = (container, message) => {
     container.innerHTML = `
-        <div class="generating">
+        <div class="generating loading">
             <div class="spinner"></div>
             <div class="generating-text">${message}</div>
         </div>
@@ -396,7 +395,14 @@ const showMessage = (container, message, type = 'error') => {
 
 // Helper to clear messages
 const clearMessages = (container, type = null) => {
-    const selector = type ? `.message.${type}` : '.message, .loading'; // Select specific type or all messages/loading
+    let selector;
+    if (type === 'loading') {
+        selector = '.loading'; // Target only the loading class
+    } else if (type) {
+        selector = `.message.${type}`; // Target message with specific type
+    } else {
+        selector = '.message, .loading'; // Target all messages and loading (when type is null)
+    }
      const messages = container.querySelectorAll(selector);
      messages.forEach(msg => msg.remove());
 };
@@ -452,7 +458,88 @@ const displayTweets = (tweets) => {
     });
 };
 
-// Fetch Tweets Button Handler - Modified to ONLY set up for loading
+// Function to automatically load tweets up to the limit (30)
+async function loadTweetsAutomatically() {
+    if (!currentUsername) return;
+    let autoLoadError = false;
+
+    // Show initial loading message
+    showLoading(tweetsContainer, 'Automatically loading initial tweets...');
+
+    // Loop while under the limit and potentially more tweets exist
+    while (allTweets.length < 30) {
+        if (isLoading) { // Safety check
+            await new Promise(resolve => setTimeout(resolve, 100));
+            continue;
+        }
+        // Stop if not the first load and no more cursor exists
+        if (allTweets.length > 0 && !nextCursor) {
+            break;
+        }
+
+        isLoading = true;
+
+        try {
+            const cursorToUse = (allTweets.length === 0) ? null : nextCursor;
+            const newData = await fetchTweets(currentUsername, cursorToUse);
+
+            if (newData.results.length > 0) {
+                allTweets = allTweets.concat(newData.results);
+                displayTweets(newData.results); // Append new tweets
+            } else if (allTweets.length === 0) {
+                // First load attempt returned no tweets - clear loading here as the loop will break
+                clearMessages(tweetsContainer); // Clear loading
+                showMessage(tweetsContainer, 'No tweets found for this user.', 'info');
+                break; // Stop loading
+            }
+            // If subsequent load returns no tweets, nextCursor check below handles it
+
+            nextCursor = newData.cursor; // Update cursor for the next potential iteration
+
+            // Stop if there's no next cursor
+            if (!nextCursor) {
+                break;
+            }
+
+            // Small delay only if we are continuing the loop
+            if (allTweets.length < 30) {
+                await new Promise(resolve => setTimeout(resolve, 200)); // 200ms delay between auto-fetches
+            }
+
+        } catch (error) {
+            console.error("Error during automatic tweet loading:", error);
+            clearMessages(tweetsContainer); // Clear loading message on error
+            showMessage(tweetsContainer, `Error automatically loading tweets: ${error.message}.`, 'error');
+            autoLoadError = true;
+            break; // Stop automatic loading on error
+        } finally {
+            isLoading = false;
+        }
+    } // End while loop
+
+    // --- Post-Automatic Load Logic --- 
+    isLoading = false; // Ensure flag is reset
+
+    // Clear the main loading spinner AFTER the loop finishes
+    if (!(autoLoadError && allTweets.length === 0)) {
+         clearMessages(tweetsContainer, 'loading');
+    }
+
+    if (!autoLoadError) {
+        if (!nextCursor && allTweets.length > 0) {
+            // No more cursors found during auto-load
+            showMessage(tweetsContainer, `All ${allTweets.length} available tweets loaded.`, 'info');
+        } else if (!nextCursor && allTweets.length === 0) {
+             // No tweets found at all (message already shown in loop)
+        } else if (allTweets.length >= 30 && nextCursor) {
+            showMessage(tweetsContainer, `Automatically loaded ${allTweets.length} tweets (limit reached).`, 'info');
+        }
+    } else {
+        // Error occurred during auto-load
+    }
+}
+
+// Fetch Tweets Button Handler - Initiates automatic loading
 fetchTweetsBtn.addEventListener('click', async () => {
     const username = twitterHandle.value.trim();
     if (!username) {
@@ -466,20 +553,15 @@ fetchTweetsBtn.addEventListener('click', async () => {
 
     // Reset state for new user fetch
     allTweets = [];
-    nextCursor = null; // Reset cursor for the first load via button
+    nextCursor = null; // Reset cursor for the first load
     isLoading = false;
-    currentUsername = username; // Store the username for button fetches
+    currentUsername = username; // Store the username
     tweetsContainer.innerHTML = ''; // Clear previous tweets
     imageContainer.innerHTML = ''; // Clear previous image
     clearMessages(tweetsContainer); // Clear any previous messages
 
-    // Prepare and show the Load More button for the initial load
-    loadMoreBtn.textContent = 'Load Tweets';
-    loadMoreBtn.disabled = false;
-    loadMoreBtn.style.display = 'block';
-
-    // DO NOT fetch tweets automatically here.
-    // User must click the "Load Tweets" button.
+    // Start the automatic loading process
+    loadTweetsAutomatically(); 
 });
 
 // Generate Image Button Handler
@@ -522,73 +604,6 @@ generateImageBtn.addEventListener('click', async () => {
         displayImage(imageUrl, prompt);
     } catch (error) {
         showMessage(imageContainer, `Error: ${error.message}`);
-    }
-});
-
-// Load More Tweets Button Handler - Handles both initial and subsequent loads
-loadMoreBtn.addEventListener('click', async () => {
-    if (isLoading || !currentUsername) {
-        // Added !currentUsername check here as well
-        return; // Do nothing if already loading or no username set
-    }
-
-    isLoading = true;
-    loadMoreBtn.disabled = true;
-    loadMoreBtn.textContent = 'Loading...';
-    clearMessages(tweetsContainer, 'info'); // Clear previous info messages
-    clearMessages(tweetsContainer, 'error'); // Clear previous error messages
-
-    try {
-        // Fetch tweets. Loading indicator is the button state.
-        const newData = await fetchTweets(currentUsername, nextCursor);
-
-        if (newData.results.length > 0) {
-            // If it was the first load and successful, clear any potential initial message
-            if (allTweets.length === 0) {
-                 // This might not be needed anymore if fetchTweetsBtn doesn't show messages
-                 // clearMessages(tweetsContainer, 'info');
-            }
-            allTweets = allTweets.concat(newData.results); // Add new tweets to the global list
-            displayTweets(newData.results); // Display only the newly fetched tweets
-        } else if (allTweets.length === 0) {
-             // Handle case where the FIRST load attempt returned no tweets
-             showMessage(tweetsContainer, 'No tweets found for this user.', 'info');
-        } else {
-            // Handle case where subsequent load attempt returned no new tweets
-            showMessage(tweetsContainer, 'No more tweets found.', 'info');
-        }
-
-        nextCursor = newData.cursor; // Update cursor
-
-        if (!nextCursor) {
-            loadMoreBtn.style.display = 'none'; // Hide button if no more cursors
-            // Only show 'All loaded' if we actually loaded some tweets
-             if (allTweets.length > 0 && newData.results.length === 0) {
-                 // Avoid showing 'All loaded' if the *very first* load returned nothing
-                 // Show 'All loaded' only if we previously had tweets and this load found none
-                 showMessage(tweetsContainer, 'All tweets loaded.', 'info');
-            } else if (allTweets.length > 0 && !newData.cursor) {
-                 // Also show if the last batch had tweets but no more cursor
-                 showMessage(tweetsContainer, 'All tweets loaded.', 'info');
-            }
-        } else {
-            // Re-enable button for next click
-            loadMoreBtn.disabled = false;
-            loadMoreBtn.textContent = 'Load More Tweets'; // Change text after first load
-            loadMoreBtn.style.display = 'block'; // Ensure it's visible
-        }
-    } catch (error) {
-        // Error is handled within fetchTweets (console log), show message here
-        showMessage(tweetsContainer, `Failed to load tweets: ${error.message}`, 'error');
-        console.error("Error fetching more tweets on click:", error);
-        // Reset button state on error so user can potentially retry
-        loadMoreBtn.disabled = false;
-        // Reset text based on whether it was the initial load or not
-        loadMoreBtn.textContent = allTweets.length === 0 ? 'Load Tweets' : 'Load More Tweets';
-         // Keep the button visible to allow retry attempts
-         loadMoreBtn.style.display = 'block';
-    } finally {
-         isLoading = false; // Ensure loading state is reset
     }
 });
 
